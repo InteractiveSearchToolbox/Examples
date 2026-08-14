@@ -1,0 +1,54 @@
+
+body{
+    margin: 0;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+#guiContainer {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    width: 100vw;
+}
+
+#leftScroller {
+    height: 100%;
+    width: 25%;
+    min-width: 200px;
+    overflow-y: scroll;
+}
+
+#forCanvas {
+    height: 100%;
+    width: 100%;
+}
+
+
+#exampleThumbNail{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 150px;
+    width: auto;
+    background-color: aliceblue;
+    margin: 15%;
+
+}
+
+img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#button {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    padding: 12px;
+    border-radius: 50%;
+    margin-bottom: 0px;
+    background-color: #FFF;
+    opacity: .9;
+    z-index: 999;
+    box-shadow: 0 0 4px rgba(0, 0, 0, .15);
+}

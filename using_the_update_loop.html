@@ -1,0 +1,281 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Search Toolbox</title>
+    <script src="IST.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        .terminal {
+            position: absolute;
+            width: 450px;
+            height: 150px;
+            background: #161b22;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        #terminalBox {
+            display: none;
+        }
+
+        .titlebar {
+            background: #21262d;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red {
+            background: #ff5f56;
+        }
+
+        .dot.yellow {
+            background: #ffbd2e;
+        }
+
+        .dot.green {
+            background: #27c93f;
+        }
+
+        .title {
+            flex: 1;
+            text-align: center;
+            color: #8b949e;
+            font-size: 13px;
+            margin-right: 54px;
+        }
+
+        .body {
+            padding: 12px 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #c9d1d9;
+            height: 320px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .body::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+
+        .body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .line {
+            border-left: 2px solid transparent;
+            padding-left: 8px;
+        }
+
+        .line.log {
+            color: #c9d1d9;
+        }
+
+        .line.info {
+            color: #58a6ff;
+        }
+
+        .line.ok,
+        .line.success {
+            color: #3fb950;
+        }
+
+        .line.warn {
+            color: #d29922;
+        }
+
+        .line.err,
+        .line.error {
+            color: #f85149;
+        }
+
+        .line.dim {
+            color: #6e7681;
+        }
+
+        .prefix {
+            opacity: 0.6;
+            margin-right: 6px;
+        }
+
+        #button {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            padding: 12px;
+            border-radius: 50%;
+            margin-bottom: 0px;
+            background-color: #FFF;
+            opacity: .9;
+            z-index: 999;
+            box-shadow: 0 0 4px rgba(0, 0, 0, .15);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="terminal" id="terminalBox">
+        <div class="titlebar">
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+            <div class="title">Hover the cursor over objects!</div>
+        </div>
+        <div class="body" id="console-output"></div>
+    </div>
+
+    <a id="button" target="_blank"
+        href="https://github.com/InteractiveSearchToolbox/Examples/master/using_the_update_loop.html"
+        title="View source code"><img src="Textures/codeArrow.svg">
+    </a>
+
+    <script type="module">
+        // EXAMPLE OF USING THE UPDATE CALLBACK
+
+        const IST = new InteractiveSearchToolbox()
+        await IST.init()
+
+        const terminalBox = document.getElementById("terminalBox")
+        const consoleOutput = document.getElementById('console-output');
+        let lastMessage = null;
+        let frameNumber = 0;
+
+        let fpsCount = 0;
+        let currentFPS = 0;
+        let startTime = 0;
+
+
+        let inSearchTrial = false // Used as a flag to only use the update callback during the search trial!
+
+        IST.turnOnLoadingScreen("Loading, please wait...");
+        const modelsToLoad = ['Models/L.glb', 'Models/T.glb', 'Models/TARGET_CUBE.glb', 'Models/Brick.glb', 'Models/HelloWorld.glb']
+
+        IST.preLoadModels(modelsToLoad)
+
+        IST.preloadHDRI(['Textures/smallStudio.hdr'], true) // Setting the second arguement to true automatically applies the HDRI to our scene.
+
+        IST.onPreloadFinished(function () {
+            //IST.showDebugStats() // Check the top left of the screen - this tells you your framerate and thus how often update is called
+
+            function setupTrial() {
+                let cubeObject = IST.findLoadedObject('TARGET_CUBE')
+                cubeObject.scale.set(0.5, 0.5, 0.5)
+                cubeObject.position.set(-3.5, 3, 0)
+                IST.addStimulusToScene(cubeObject);
+
+                let L_Object = IST.findLoadedObject('L')
+                L_Object.scale.set(0.15, 0.15, 0.15)
+                L_Object.position.set(3.5, 2, 0)
+                IST.addStimulusToScene(L_Object);
+
+                let T_Object = IST.findLoadedObject('T')
+                T_Object.scale.set(0.15, 0.15, 0.15)
+                T_Object.position.set(-3.5, -2, 0)
+                IST.addStimulusToScene(T_Object);
+
+                let brickObject = IST.findLoadedObject('Brick')
+                brickObject.scale.set(0.25, 0.25, 0.25)
+                brickObject.position.set(3.5, -2, 0)
+                IST.addStimulusToScene(brickObject);
+
+                IST.camera.position.z = 50;
+                IST.camera.lookAt(0, 0, 0)
+                IST.enableDragToRotateControls();
+
+                inSearchTrial = true;
+
+            }
+
+
+
+            // Using the update callback allows code to be run with every redraw of the screen.
+            // This is tied to the refresh rate of the screen - e.g., 60Hz
+            IST.update(function () {
+
+                // Currently raycast object (e.g., what the cursor is hovering over)
+                if (IST.currentRaycastObject != null) {
+                    const text = "Frame Number: " + frameNumber + "\nFPS: " + currentFPS + "\nRaycast Object: " + IST.currentRaycastObject.name
+                    consoleOutput.textContent = text
+                } else {
+                    const text = "Frame Number: " + frameNumber + "\nFPS: " + currentFPS + "\nNot hovering over anything important!"
+                    consoleOutput.textContent = text
+                }
+
+                if (performance.now() - startTime > 1000) {
+                    currentFPS = ((fpsCount / 1000) * 1000).toFixed(0);
+                    fpsCount = 0;
+                    startTime = performance.now();
+                }
+
+                fpsCount++;
+                frameNumber++;
+            });
+
+            // Instruction trial is where we would provide instructions on how to complete the experiment.
+            const INSTRUCTION_TRIAL = {
+                type: jsPsychHtmlButtonResponse,
+                on_start() {
+                },
+                stimulus: `
+                <h3>Welcome!</h3>
+                When you are ready to start, press the button below!
+                `,
+                on_finish(data) {
+                },
+                choices: ['Start Experiment']
+            }
+
+            const SEARCH_TRIAL = {
+                type: jsPsychHtmlKeyboardResponse,
+                on_start() {
+                    setupTrial(); // Gets all the stimuli adds them and places them in the scene using the helper function
+                    terminalBox.style.display = 'initial'
+                    IST.startTrial(); // We call this to start the trial - This is extremely important.
+                    startTime = performance.now()
+                },
+                stimulus: '', // We tell jspsych not to show anything for the trial, we handle that with the IST instead. 
+                on_finish() {
+                    inSearchTrial = false
+                    IST.endTrial(); // Call this at the end of every trial - This is extremely important. 
+                },
+                choices: ['z', 'm']
+            }
+
+
+            IST.turnOffLoadingScreen();
+
+            jsPsych.run([INSTRUCTION_TRIAL, SEARCH_TRIAL]) // Run experiment
+        })
+
+    </script>
+
+</body>
+
+</html>

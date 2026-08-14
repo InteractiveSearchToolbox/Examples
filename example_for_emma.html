@@ -1,0 +1,184 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Search Toolbox</title>
+    <link type="text/css" rel="stylesheet" href="styles.css">
+    <script type="module" src="IST.min.js"></script>
+</head>
+
+<body>
+    <a id="button" target="_blank"
+        href="https://github.com/InteractiveSearchToolbox/Examples/master/using_the_update_loop.html"
+        title="View source code"><img src="Textures/codeArrow.svg">
+    </a>
+    <script type="module">
+        const IST = new InteractiveSearchToolbox({
+            jsPychPlugins: ["plugin-instructions","plugin-survey-multi-choice@2.2.1"],
+            //backgroundColour: "#c7c7c7",
+            includePhysics:false
+        })    
+        await IST.init()
+    
+        IST.turnOnLoadingScreen("Loading, please wait...");
+        const modelsToLoad = ['Models/LOW_TARGET_CUBE.glb', 'Models/LOW_DISTRACTOR_CUBE.glb']
+
+        IST.preLoadModels(modelsToLoad)
+
+        IST.preloadHDRI(['Textures/smallStudio.hdr'], true) // Setting the second arguement to true automatically applies the HDRI to our scene.
+
+        IST.onPreloadFinished(function () {
+            // Setup some basic variables which we will use throughout
+            const timeline = []; // JsPsych timeline
+            const stimuli = [] // Array to hold our processed stimuli
+            const blueDistractors = []
+            const redDistractors = []
+            const redTargets = []
+            const trialTypes = _.shuffle([]) // Array for our trial types
+            let currentTrialCount = 0 // Counter to know which trial we are on
+            
+            // These are used to reset positions
+            let previousPosition = null
+            let previousRotation = null
+            let currentlyFocusedCube = null
+
+
+
+            function setupStimuli() {
+                
+                // Start by making 7 distractor cubes and 1 target cube in one colour.
+                // Red cubes...
+                for (let i = 0; i < 7; i++) {
+                    const cube = IST.findLoadedObject('LOW_DISTRACTOR_CUBE').clone()
+                    cube.name = "DISTRACTOR_RED_" + (i + 1)
+
+                    cube.traverse((o) => {
+                        // Go through all items, if the selected item is a mesh...
+                        if (o.isMesh) {
+                            // If the mesh we're inspecting includes the name BASE it is the one we want (we named this back in Blender)
+                            if (o.name.includes("BASE")) {
+                                o.material = new THREE.MeshStandardMaterial({ color: '#F50A64' })
+                            }
+                        }
+                    });
+
+                    cube.rotateX(1.5708) // This is in radians, we just just rotate the cube around it's x axis by 90 degrees so that it faces away from the camera
+
+
+                    redDistractors.push(cube)
+                }
+                
+                // Now handle the red target cube
+                const cube_target = IST.findLoadedObject('LOW_TARGET_CUBE').clone()
+                    cube_target.name = "TARGERT_RED_1"
+
+                    cube_target.traverse((o) => {
+                        // Go through all items, if the selected item is a mesh...
+                        if (o.isMesh) {
+                            // If the mesh we're inspecting includes the name BASE it is the one we want (we named this back in Blender)
+                            if (o.name.includes("BASE")) {
+                                o.material = new THREE.MeshStandardMaterial({ color: '#F50A64' })
+                            }
+                        }
+                    });
+
+                    cube_target.rotateX(1.5708) // This is in radians, we just just rotate the cube around it's x axis by 90 degrees so that it faces away from the camera
+
+                    redTargets.push(cube_target)
+
+                // Now make 8 blue distractor cubes
+                // No target in this one since we only want the target to be in the red ones.
+                for (let i = 0; i < 8; i++) {
+                    const cube = IST.findLoadedObject('LOW_DISTRACTOR_CUBE').clone()
+                    cube.name = "DISTRACTOR_BLUE_" + (i + 1)
+
+                    cube.traverse((o) => {
+                        // Go through all items, if the selected item is a mesh...
+                        if (o.isMesh) {
+                            // If the mesh we're inspecting includes the name BASE it is the one we want (we named this back in Blender)
+                            if (o.name.includes("BASE")) {
+                                o.material = new THREE.MeshStandardMaterial({ color: '#30AAAB' })
+                            }
+                        }
+                    });
+
+                    cube.rotateX(1.5708) // This is in radians, we just just rotate the cube around it's x axis by 90 degrees so that it faces away from the camera
+                    blueDistractors.push(cube)
+                }
+            }
+
+            setupStimuli()
+            
+            // Merge all our stimuli together into one array for the placing function
+            let objectsForScene = []
+            objectsForScene = objectsForScene.concat(redDistractors,redTargets,blueDistractors)
+            objectsForScene = _.shuffle(objectsForScene)
+
+            // placeOnGrid() will randomly place each object into the scene within a X by Y grid
+            IST.placeOnGrid({
+                objectsToPlace: objectsForScene,
+                columns: 4,
+                rows: 4,
+                jitter: 0,
+                distanceBetween: 1,
+                randomRotation: false,
+            });
+
+            IST.camera.position.z = 100
+
+
+            // HERE'S WHERE YOU HANDLE ALL THE INTERACTIVITY
+            // When the cursor is pressed down...
+            IST.onPointerDown(function(event){
+                
+                // Check whether the cursor is over a cube (selectedObject) and check whether there is already a cube picked up (currentlyFocusedCube)
+                if(IST.selectedObject !== null & currentlyFocusedCube === null){
+                    currentlyFocusedCube = IST.selectedObject
+
+                    previousPosition = IST.selectedObject.position.clone() // Store it's starting position
+                    previousRotation = IST.selectedObject.quaternion.clone() // Store it's starting rotation
+                        
+                    IST.selectedObject.position.set(0,0,70) // Move the cube to the middle of the screen 
+                    IST.selectedObject.rotateX(-1.5708*2) // Flip it so you can see the bottom
+                    
+                }else{
+                    // If they click else where on the screen when there is a cube already selected then it needs to be reset (placed back)
+                    if(currentlyFocusedCube !== null){
+                        currentlyFocusedCube.position.copy(previousPosition)
+                        currentlyFocusedCube.quaternion.copy(previousRotation)
+                        
+                        previousPosition = null
+                        previousRotation = null
+                        currentlyFocusedCube = null
+                    }   
+                }
+            })
+
+            // HAYWARD WANTS YOU TO MAKE IT ROTATE INSTEAD OF APPEARING IMMEDIATELY
+            // You have two options, either trigger an animation you made in blender using three.js's animation mixer (https://threejs.org/docs/#AnimationMixer) - this is quite hard if you've never done animations in 3D grpahics though
+            // Or instead you just rotate the object a small amount with each update of the screen and multiply it by delta - alot easier.
+                // If you don't know about delta, look up deltaTime in gaming.
+
+            // This callback lets you access each update of the screen easily.
+            IST.update(function(){
+                //console.log(IST.delta) // here's your delta time
+
+                // currentlyFocusedCube.rotation.x += (some_amount * IST.delta)
+
+                // If rotation of cube equals a certain amount then stop rotating.
+            })
+
+            // YOU WILL ALSO NEED TO INTEGRATE THIS ALL INTO A JSPSYCH FRAMEWORK - YOU CAN JUST COPY ANY OF THE OTHER EXAMPLES FOR THIS
+                
+
+            IST.turnOffLoadingScreen();
+            IST.startTrial() // Don't forget to start the trial (animation loop)
+        });
+
+
+
+
+    </script>
+</body>
+
+</html>
