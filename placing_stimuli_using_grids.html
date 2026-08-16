@@ -5,19 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Search Toolbox</title>
     <link type="text/css" rel="stylesheet" href="styles.css">
+    <style>
+        body{
+            background-color: #c7c7c7;
+        }
+
+        #debugGridToggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            visibility: hidden;
+            gap: 6px;
+        }
+ 
+        #debugGridToggle input {
+            cursor: pointer;
+        }
+ 
+        #debugGridToggle label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+    </style>
     <script type="module" src="IST.min.js"></script>
 </head>
 
 <body>
-    <a id="button" target="_blank"
-        href="https://github.com/InteractiveSearchToolbox/Examples/blob/main/placing_stimuli_using_grids.html"
-        title="View source code"><img src="Textures/codeArrow.svg">
-    </a>
+    <div id="debugGridToggle">
+        <input type="checkbox" id="debugGridCheckbox" checked>
+        <label for="debugGridCheckbox">Show debug grid</label>
+    </div>
+
     <script type="module">
         // EXAMPLE OF USING THE RANDOM PLACEMENT FUNCTIONS 
 
         const IST = new InteractiveSearchToolbox()
         await IST.init()
+
+        const showDebugGridToggle = document.getElementById("debugGridToggle")
+        const debugGridCheckbox = document.getElementById("debugGridCheckbox")
+        let gridObj
+        debugGridCheckbox.addEventListener('click', function(){
+            gridObj.debugGrid.visible = debugGridCheckbox.checked;
+        })
 
         IST.turnOnLoadingScreen("Loading, please wait...");
 
@@ -76,8 +114,8 @@
 
                 // To do so, we place that array into one of the helper function
                 // placeOnGrid() will randomly place each object into the scene within a X by Y grid
-                IST.placeOnGrid({
-                    stimuli: objectsForScene,
+                gridObj = IST.placeOnGrid({
+                    objectsToPlace: objectsForScene,
                     columns: 6,
                     rows: 4,
                     jitter: 0.1,
@@ -85,6 +123,8 @@
                     randomRotation: true,
                     showDebugGrid: true // Set to false to hide the grid lines
                 });
+
+                console.log(gridObj)
                 IST.enableDragControls(); // Finally enable the drag controls
             }
 
@@ -107,6 +147,7 @@
                 on_start() {
                     setupTrial(); // Gets all the stimuli adds them and places them in the scene using the helper function
                     IST.startTrial(); // We call this to start the trial - This is extremely important.
+                    showDebugGridToggle.style.visibility = 'visible';
                 },
                 stimulus: '', // We tell jspsych not to show anything for the trial, we handle that with the IST instead. 
                 on_finish() {

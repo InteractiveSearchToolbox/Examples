@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Search Example</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    body {
+      margin: 0;
+      background-color: #c7c7c7;
+    }
+
+    #debugToggle {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      visibility: hidden;
+      gap: 6px;
+    }
+
+    #debugToggle input {
+      cursor: pointer;
+    }
+
+    #debugToggle label {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #gui {
+      position: absolute;
+      display: none;
+      flex-direction: column;
+      width: 100vw;
+      height: 100vh;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    #shuffleButton {
+      margin-top: auto;
+      margin-bottom: 20px;
+      pointer-events: all;
+    }
+
+    #panel {
+      pointer-events: all;
+      margin-top: 16px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 12px;
+      width: auto;
+      max-width: 800px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    #panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    #nextBucket {
+      pointer-events: all;
+    }
+
+    #panel-header:hover {
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    #panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    #panel-toggle {
+      font-size: 11px;
+      color: #888;
+      transition: transform 0.25s ease;
+    }
+
+    #panel-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #panel-body.collapsed {
+      display: none;
+    }
+
+    .hint {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 12.5px;
+      color: #555;
+      line-height: 1.45;
+    }
+
+    .hint-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f5c842;
+      border: 1px solid #d4a800;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .hint-bullet {
+      flex-shrink: 0;
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    kbd {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+    #messageBox {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 0;
+      padding: 12px 20px;
+      color: #2a2a2a;
+      background-color: rgba(245, 255, 250, 0.9);
+      border: 3px solid rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+      font-family: sans-serif;
+      font-size: 14px;
+      pointer-events: none;
+      max-width: 280px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    #scoreGUI {
+      position: fixed;
+      z-index: 9999;
+      top: 0px;
+      left: 0px;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      display: none;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #score {
+      pointer-events: all;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 14px 24px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    #score p {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    #score p::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    #correct::before {
+      background: #2e8b57;
+    }
+
+    #incorrect::before {
+      background: #d9534f;
+    }
+
+    #totalCollected::before {
+      background: #4a90d9;
+    }
+
+    #totalDiscarded::before {
+      background: #999;
+    }
+
+    #nextBucket {
+      pointer-events: all;
+      border: none;
+      background: #222;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    #nextBucket:hover {
+      background: #000;
+    }
+
+    #nextBucket:active {
+      transform: scale(0.96);
+    }
+  </style>
+
+  <script type="module" src="IST.min.js"></script>
+</head>
+
+<body>
+  <div id="debugToggle">
+    <input type="checkbox" id="debugCheckbox" !checked>
+    <label for="debugCheckbox">Show colliders</label>
+  </div>
+
+  <div id="scoreGUI">
+    <div id="score">
+      <p id='correct'>Correct: 0</p>
+      <p id='incorrect'>Incorrect: 0</p>
+      <p id='totalCollected'>Collected: 0</p>
+      <p id='totalDiscarded'>Discarded: 0</p>
+      <button id="nextBucket">Next Bucket</button>
+    </div>
+  </div>
+
+  <div id="messageBox"></div>
+  <script type="module">
+    const IST = new InteractiveSearchToolbox({
+      threeAddons: [
+        ["RapierHelper", "three/addons/helpers/RapierHelper.js"],
+        ["MeshSurfaceSampler", "three/addons/math/MeshSurfaceSampler.js"]
+      ],
+      includePhysics: true,
+    })
+
+    await IST.init()
+
+    let scene, camera, renderer, controls, threeCanvas;
+    const stats = new Stats();
+    //document.body.appendChild(stats.dom);
+    const loadedStimuli = [];
+    const loadedTextures = [];
+
+    // How long they search for - this is 5 minutes
+    const experimentLength = (60000 * 3)//5)
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    };
+
+    let jatosMessage = 'STUDY_FINISHED'
+
+    //const loadingScreen = document.getElementById("loadingScreen")
+    const scoreGUI = document.getElementById("scoreGUI")
+
+    const collectionPlanes = []
+
+    const basicDataObject = {
+      RT_THIS_BUCKET: [],
+      BUCKET_NUMBER: [],
+      TARGET_BLOCKS_COLLECTED_THIS_BUCKET: [],
+      DISTRACTOR_BLOCKS_COLLECTED_THIS_BUCKET: [],
+      TARGET_BLOCKS_DISCARDED_THIS_BUCKET: [],
+      DISTRACTOR_BLOCKS_DISCARDED_THIS_BUCKET: [],
+      TOTAL_BLOCKS_COLLECTED_THIS_BUCKET: [],
+      TOTAL_BLOCKS_DISCARDED_THIS_BUCKET: [],
+      TOTAL_BLOCKS_COLLECTED: [],
+      TOTAL_BLOCKS_DISCARDED: [],
+      TOTAL_TARGETS_COLLECTED: [],
+      TOTAL_DISTRACTORS_COLLECTED: [],
+      TOTAL_TARGETS_DISCARDED: [],
+      TOTAL_DISTRACTORS_DISCARDED: []
+    }
+
+    const interactiveSearchData = {
+
+    }
+
+    let bucketStartTime
+    let currentBucketNum = 0;
+    let finalBeneathLid = 0;
+    const minimumTravelTime = 5000
+    const maxPlacingTime = 100//00
+
+    let occluders
+
+    const jsPsych = initJsPsych();
+    const timeline = [];
+
+    let requestID
+    let physicsIntervalID
+    let checkingID
+    let checkingTimer = 0
+
+    const world = new RAPIER.World({ x: 0.0, y: -9.81, z: 0.0 });
+    const physicsObjects = []
+    const physicsHelper = new RapierHelper(world);
+    physicsHelper.layers.set(1);
+    physicsHelper.visible = false;
+    console.log(physicsHelper)
+    
+    const debugToggle = document.getElementById("debugToggle")
+    const debugCheckbox = document.getElementById("debugCheckbox")
+    let gridObj
+    debugCheckbox.addEventListener('click', function () {
+      physicsHelper.visible = debugCheckbox.checked;
+    })
+
+    let physicsIDs = -1;
+    let cube
+    let shuffler
+    let isShuffling = false
+    const shuffler_pos = new THREE.Vector3()
+    const shuffler_rot = new THREE.Euler()
+    //const shuffleButton = document.getElementById('shuffleButton')
+    const worldPosition = new THREE.Vector3()
+    const worldPointer = new THREE.Vector3()
+    let pointerInitialized = false
+    const pointer = new THREE.Vector2()
+    const handDistance = new THREE.Vector3(0, 5, 0)
+    const selectedCubeDistance = new THREE.Vector3(0, 15, 0)
+    const OFFSCREEN = new THREE.Vector3(-5000, 0, 0)
+    const originPoint = new THREE.Vector3(0, 0, 0)
+    const REMOVE_DIST_SQ = -100 //* 100; // 100 units, squared
+    const raycastableObjects = []
+    const masterLegoPieces = []
+    let selectedObject = null
+    let handEnabled = false
+    let controlsEnabled = false
+    const colourList = [0xff643c, 0xf73232, 0xf50a64, 0xeb00aa, 0xb432b4, 0x6e3bc8, 0x2d78eb, 0x35a5eb, 0x30aaab]//, 0x3c966e, 0x3cc85a, 0x78be00, 0xbed200, 0xebeb00, 0xd7c300, 0xf0aa02];
+
+    const delta_quat = new THREE.Quaternion();
+    const yAxis = new THREE.Vector3(0, 1, 0)
+    const spiralRadius = 1.5;
+    let delta = 1 / 60
+    let shuffleAngle = 0;
+
+    const debugGeometry = new THREE.SphereGeometry(1.5, 16, 8);
+    const debugMaterial = new THREE.MeshBasicMaterial({ color: 0xffff * Math.random() });
+    const debugSphere = new THREE.Mesh(debugGeometry, debugMaterial);
+    //debugSphere.position.copy(OFFSCREEN)
+
+    //debugSphere.visible = false
+    //const handObject = createShuffler(debugSphere, debugSphere.position)
+    //let handMesh
+    let handObject
+    const messageBox = document.getElementById('messageBox')
+    let messageBoxTimeoutID
+
+    const correct = document.getElementById('correct')
+    const incorrect = document.getElementById('incorrect')
+    const totalCollected = document.getElementById('totalCollected')
+    const totalDiscarded = document.getElementById('totalDiscarded')
+
+    let correctCount = 0
+    let incorrectCount = 0
+
+    let totalCollectedCount = 0
+    let totalDiscardedCount = 0
+
+    let totalTargetsCollectedCount = 0
+    let totalTargetsDiscardedCount = 0
+
+    let totalDistractorsCollectedCount = 0
+    let totalDistractorsDiscardedCount = 0
+
+    let totalTargetsCollectedThisBucket = 0;
+    let totalDistractorsCollectedThisBucket = 0;
+    let totalTargetsDiscardedThisBucket = 0;
+    let totalDistractorsDiscardedThisBucket = 0;
+
+    let totalCollectedThisBucket = 0;
+    let totalDiscardedThisBucket = 0;
+
+    const modelsToLoad = ['Models/PhysicsDragAndDrop/Bucket2.glb', 'Models/PhysicsDragAndDrop/Limits.glb', 'Models/PhysicsDragAndDrop/hand.glb',
+      'Models/PhysicsDragAndDrop/CollectPlane.glb', 'Models/PhysicsDragAndDrop/DiscardPlane.glb',
+      'Models/PhysicsDragAndDrop/1x1Brick.glb', 'Models/PhysicsDragAndDrop/1x2Brick.glb', 'Models/PhysicsDragAndDrop/1x2Plate.glb', 'Models/PhysicsDragAndDrop/1x2PlateSingle.glb', 'Models/PhysicsDragAndDrop/1x4Brick.glb', 'Models/PhysicsDragAndDrop/1x4Plate.glb', 'Models/PhysicsDragAndDrop/2x1Slope.glb', 'Models/PhysicsDragAndDrop/2x2Brick.glb', 'Models/PhysicsDragAndDrop/2x2Slope.glb', 'Models/PhysicsDragAndDrop/2x4Brick.glb', 'Models/PhysicsDragAndDrop/Arch.glb'
+    ];
+
+    IST.preLoadModels(modelsToLoad)
+
+    IST.preloadHDRI(['Textures/smallStudio.hdr'], true) // Setting the second arguement to true automatically applies the HDRI to our scene.
+
+    IST.onPreloadFinished(function () {
+      processLoadedMeshes();
+
+      const nextBucketButton = document.getElementById("nextBucket")
+      nextBucketButton.addEventListener('click', function (event) {
+        fetchBucket(true)
+      })
+      //IST.enableOrbitControls()
+
+
+      function resetTrialCounts() {
+        totalTargetsCollectedThisBucket = 0;
+        totalDistractorsCollectedThisBucket = 0;
+        totalTargetsDiscardedThisBucket = 0;
+        totalDistractorsDiscardedThisBucket = 0;
+
+        totalCollectedThisBucket = 0;
+        totalDiscardedThisBucket = 0;
+      }
+
+      function saveData(data) {
+        IST.turnOffLoadingScreen()
+        /*jatos.uploadResultFile(data, "basicData.json")
+          .then(
+            function () {
+              console.log("File was successfully uploaded")
+              saveInteractionData(interactiveSearchData)
+              turnOffLoadingScreen();
+            })
+          .catch(
+            function (error) {
+              console.log("File upload failed")
+              saveInteractionData(interactiveSearchData)
+              jatosMessage = "STUDY_FINISHED_DATA_ERROR"
+            }
+          );*/
+      }
+
+      function saveInteractionData(intData) {
+        /*jatos.uploadResultFile(intData, "interactiveData.json")
+          .then(
+            function () {
+              console.log("File was successfully uploaded")
+              turnOffLoadingScreen();
+            })
+          .catch(
+            function (error) {
+              console.log("File upload failed")
+              turnOffLoadingScreen();
+              jatosMessage = "STUDY_FINISHED_DATA_ERROR"
+            }
+          );*/
+      }
+
+      function updateScoreGUI(type, value) {
+
+        if (type == 'correct') {
+          correct.innerHTML = 'Correct: ' + correctCount
+        } else if (type == 'incorrect') {
+          incorrect.innerHTML = 'Incorrect: ' + incorrectCount
+        } else if (type == 'totalCollected') {
+          totalCollected.innerHTML = 'Collected: ' + totalCollectedCount
+        } else if (type == 'totalDiscarded') {
+          totalDiscarded.innerHTML = 'Discarded: ' + totalDiscardedCount
+        }
+
+      }
+
+
+      function displayMessage(textToDisplay) {
+        clearTimeout(messageBoxTimeoutID)
+        messageBox.style.display = 'block'
+        messageBox.innerHTML = textToDisplay;
+        messageBoxTimeoutID = setTimeout(function () {
+          messageBox.style.display = 'none';
+          messageBox.textContent = '';
+        }, 3000)
+      }
+
+
+      function fetchBucket(collectData) {
+        debugToggle.style.visibility = 'visible';
+        if (collectData) {
+          collectTrialData();
+          resetTrialCounts();
+        }
+
+        currentBucketNum++
+
+        if (currentBucketNum > 0) {
+          IST.endTrial(false) // Do not automatically clear the scene
+        }
+
+        //turnOnLoadingScreen("Fetching the bucket, please wait!")
+        selectedObject = null;
+        stop()
+        scoreGUI.style.display = 'none';
+        messageBox.style.display = 'none';
+        clearScene()
+
+
+        const stimuli = createStimuli()
+        placeStimuli(stimuli)
+        IST.startTrial()
+        trialStart()
+
+        let startTime = performance.now()
+
+        checkingID = setInterval(function () {
+          checkingTimer += performance.now() - startTime //200
+
+          const totalStimuliLength = raycastableObjects.length
+
+          if (checkingTimer < maxPlacingTime) {
+
+            let objectsBeneathLid = 0
+            raycastableObjects.forEach(object => {
+              if (object.position.y < 6) {
+                objectsBeneathLid++
+              }
+            });
+
+            finalBeneathLid = objectsBeneathLid
+
+            if (checkingTimer > minimumTravelTime) {
+              clearInterval(checkingID)
+              checkingTimer = 0;
+              IST.turnOffLoadingScreen()
+              IST.camera.position.set(0, 150, 0)
+              IST.camera.lookAt(0, 0, 0)
+              controlsEnabled = true;
+              bucketStartTime = performance.now()
+            }
+
+          } else if (checkingTimer > minimumTravelTime & checkingTimer > maxPlacingTime) {
+            clearInterval(checkingID)
+            checkingTimer = 0;
+            IST.turnOffLoadingScreen()
+            IST.camera.position.set(0, 150, 0)
+            IST.camera.lookAt(0, 0, 0)
+            controlsEnabled = true;
+            bucketStartTime = performance.now()
+          }
+          startTime = performance.now()
+        }, 200)
+      }
+
+
+
+      const raycaster = new THREE.Raycaster();
+      const collectionRaycaster = new THREE.Raycaster();
+
+
+      // Create the ground
+      let groundColliderDesc = RAPIER.ColliderDesc.cuboid(100.0, 0.1, 100.0);
+      world.createCollider(groundColliderDesc);
+      //const bucket = createBucket({ x: -10, y: 0, z: 0 });
+
+      function getPhysicsObject(ID) {
+        const obj = physicsObjects.find(o => o.ID === ID);
+        if (obj) {
+          return (obj)
+        } else {
+          return null
+        }
+      }
+
+      function removeObject(PhysObj) {
+        const index = physicsObjects.indexOf(PhysObj);
+        const raycastIndex = raycastableObjects.indexOf(PhysObj.MESH)
+        if (index !== -1) {
+          world.removeRigidBody(PhysObj.RB);
+          world.removeCollider(PhysObj.COLLIDER);
+          physicsObjects.splice(index, 1);
+          IST.removeStimulusFromScene(PhysObj.MESH)
+        }
+
+        if (raycastIndex !== -1) {
+          raycastableObjects.splice(raycastIndex, 1);
+        }
+
+        if (selectedObject) {
+          selectedObject = null
+        }
+      }
+
+      function createBucket(mesh, type = "trimesh") {
+        const position = new THREE.Vector3();
+        mesh.getWorldPosition(position);
+        const quaternion = mesh.quaternion;
+
+        const rigidBodyDesc = RAPIER.RigidBodyDesc.fixed()
+          .setTranslation(position.x, position.y, position.z)
+          .setRotation({ x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w });
+
+        const rigidBody = world.createRigidBody(rigidBodyDesc);
+
+        if (type === "cuboid") {
+          mesh.geometry.computeBoundingBox();
+          const size = new THREE.Vector3();
+          const center = new THREE.Vector3();
+          mesh.geometry.boundingBox.getSize(size);
+          mesh.geometry.boundingBox.getCenter(center);
+          size.divideScalar(2); // half-extents
+
+          // Transform the local center offset into world space
+          center.applyMatrix4(mesh.matrixWorld);
+
+          const rigidBodyDesc = RAPIER.RigidBodyDesc.fixed()
+            .setTranslation(center.x, center.y, center.z)  // use center, not position
+            .setRotation({ x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w });
+
+          const rigidBody = world.createRigidBody(rigidBodyDesc);
+          const colliderDesc = RAPIER.ColliderDesc.cuboid(size.x, size.y, size.z);
+          world.createCollider(colliderDesc, rigidBody);
+
+          return rigidBody;
+
+        } else {
+          // Extract vertices and indices for trimesh
+          const geo = mesh.geometry.index ? mesh.geometry.clone() : mesh.geometry;
+          const positionAttr = geo.attributes.position;
+
+          const vertices = new Float32Array(positionAttr.count * 3);
+          for (let i = 0; i < positionAttr.count; i++) {
+            vertices[i * 3] = positionAttr.getX(i);
+            vertices[i * 3 + 1] = positionAttr.getY(i);
+            vertices[i * 3 + 2] = positionAttr.getZ(i);
+          }
+
+          let indices;
+          if (geo.index) {
+            indices = new Uint32Array(geo.index.array);
+          } else {
+            indices = new Uint32Array(positionAttr.count);
+            for (let i = 0; i < positionAttr.count; i++) indices[i] = i;
+          }
+
+          const colliderDesc = RAPIER.ColliderDesc.trimesh(vertices, indices);
+          world.createCollider(colliderDesc, rigidBody);
+        }
+
+        return rigidBody;
+      }
+
+      function createShuffler(rootMesh, spawnPosition, useConvexHull = false) {
+        // Create the single kinematic rigid body at the root's spawn position
+        let rigidBodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+          .setTranslation(spawnPosition.x, spawnPosition.y, spawnPosition.z);
+        rigidBodyDesc.setRotation(
+          { x: rootMesh.quaternion.x, y: rootMesh.quaternion.y, z: rootMesh.quaternion.z, w: rootMesh.quaternion.w },
+          true
+        );
+
+        const rigidBody = world.createRigidBody(rigidBodyDesc);
+        rigidBody.lockRotations(true, true);
+
+        // Make sure local transforms are current before we read them
+        rootMesh.updateWorldMatrix(true, true);
+
+        const colliders = [];
+
+        rootMesh.traverse((child) => {
+          if (!child.isMesh || !child.geometry) return;
+
+          // Get this child's transform RELATIVE TO rootMesh (the rigid body's frame),
+          // not relative to world space.
+          const localMatrix = new THREE.Matrix4().copy(child.matrixWorld);
+          localMatrix.premultiply(new THREE.Matrix4().copy(rootMesh.matrixWorld).invert());
+
+          const localPos = new THREE.Vector3();
+          const localQuat = new THREE.Quaternion();
+          const localScale = new THREE.Vector3();
+          localMatrix.decompose(localPos, localQuat, localScale);
+
+          let colliderDesc;
+
+          if (useConvexHull) {
+            const position = child.geometry.attributes.position;
+            const points = new Float32Array(position.array);
+            colliderDesc = RAPIER.ColliderDesc.convexHull(points);
+
+            if (!colliderDesc) {
+              console.warn("Convex hull failed for", child.name, "- falling back to bounding sphere");
+              child.geometry.computeBoundingSphere();
+              colliderDesc = RAPIER.ColliderDesc.ball(child.geometry.boundingSphere.radius);
+            }
+          } else {
+            child.geometry.computeBoundingSphere();
+            colliderDesc = RAPIER.ColliderDesc.ball(child.geometry.boundingSphere.radius);
+          }
+
+          // Position/orient this collider relative to the rigid body
+          colliderDesc.setTranslation(localPos.x, localPos.y, localPos.z);
+          colliderDesc.setRotation({ x: localQuat.x, y: localQuat.y, z: localQuat.z, w: localQuat.w });
+
+          const collider = world.createCollider(colliderDesc, rigidBody);
+          colliders.push(collider);
+        });
+
+        rootMesh.position.copy(rigidBody.translation());
+        rootMesh.quaternion.copy(rigidBody.rotation());
+
+        physicsIDs += 1;
+        const ID = physicsIDs;
+
+        const physicsObject = { RB: rigidBody, COLLIDER: colliders, MESH: rootMesh, ID: ID };
+
+        return physicsObject;
+      }
+
+      function createPhysicsObject(mesh, type = "cuboid") {
+        let rigidBodyDesc, colliderDesc;
+
+        const position = new THREE.Vector3()
+        mesh.getWorldPosition(position);
+        const quaternion = mesh.quaternion;
+
+        // Helper to set up a dynamic rigid body at the mesh's transform
+        function makeRigidBody() {
+          const desc = RAPIER.RigidBodyDesc.dynamic();
+          desc.setTranslation(position.x, position.y, position.z);
+          desc.setRotation({ x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w });
+          return desc;
+        }
+
+        if (type === "cuboid") {
+          const size = new THREE.Vector3();
+          mesh.geometry.computeBoundingBox();
+          mesh.geometry.boundingBox.getSize(size);
+          size.divideScalar(2);
+
+          rigidBodyDesc = makeRigidBody();
+          colliderDesc = RAPIER.ColliderDesc.cuboid(size.x, size.y, size.z);
+
+        } else if (type === "ball") {
+          mesh.geometry.computeBoundingSphere();
+          const radius = mesh.geometry.boundingSphere.radius;
+
+          rigidBodyDesc = makeRigidBody();
+          colliderDesc = RAPIER.ColliderDesc.ball(radius);
+
+        } else if (type === "capsule") {
+          // Capsule is oriented along Y by default in Rapier.
+          // halfHeight is the half-length of the cylindrical shaft (excluding the two end caps).
+          mesh.geometry.computeBoundingBox();
+          const size = new THREE.Vector3();
+          mesh.geometry.boundingBox.getSize(size);
+
+          const radius = Math.max(size.x, size.z) / 2;
+          const halfHeight = Math.max(0, (size.y / 2) - radius);
+
+          rigidBodyDesc = makeRigidBody();
+          colliderDesc = RAPIER.ColliderDesc.capsule(halfHeight, radius);
+
+        } else if (type === "convex") {
+          // Extract world-space vertex positions from the geometry
+          const positionAttr = mesh.geometry.attributes.position;
+          const vertices = new Float32Array(positionAttr.count * 3);
+          for (let i = 0; i < positionAttr.count; i++) {
+            vertices[i * 3] = positionAttr.getX(i);
+            vertices[i * 3 + 1] = positionAttr.getY(i);
+            vertices[i * 3 + 2] = positionAttr.getZ(i);
+          }
+
+          rigidBodyDesc = makeRigidBody();
+          colliderDesc = RAPIER.ColliderDesc.convexHull(vertices);
+          if (!colliderDesc) {
+            console.warn("convexHull failed — falling back to cuboid for", mesh.name);
+            mesh.geometry.computeBoundingBox();
+            const size = new THREE.Vector3();
+            mesh.geometry.boundingBox.getSize(size);
+            size.divideScalar(2);
+            colliderDesc = RAPIER.ColliderDesc.cuboid(size.x, size.y, size.z);
+          }
+
+        } else if (type === "trimesh") {
+          // Extract vertices and triangle indices from the geometry
+          const geo = mesh.geometry.index
+            ? mesh.geometry.clone() // keep indexed form
+            : mesh.geometry;
+
+          const positionAttr = geo.attributes.position;
+          const vertices = new Float32Array(positionAttr.count * 3);
+          for (let i = 0; i < positionAttr.count; i++) {
+            vertices[i * 3] = positionAttr.getX(i);
+            vertices[i * 3 + 1] = positionAttr.getY(i);
+            vertices[i * 3 + 2] = positionAttr.getZ(i);
+          }
+
+          let indices;
+          if (geo.index) {
+            indices = new Uint32Array(geo.index.array);
+          } else {
+            // Non-indexed: generate sequential indices
+            indices = new Uint32Array(positionAttr.count);
+            for (let i = 0; i < positionAttr.count; i++) indices[i] = i;
+          }
+
+          rigidBodyDesc = makeRigidBody();
+          colliderDesc = RAPIER.ColliderDesc.trimesh(vertices, indices);
+
+        } else {
+          throw new Error(`Unknown collider type: "${type}"`);
+        }
+
+        const rigidBody = world.createRigidBody(rigidBodyDesc);
+        const collider = world.createCollider(colliderDesc, rigidBody);
+
+        mesh.userData.RB = rigidBody
+        mesh.userData.COLLIDER = collider
+
+        physicsIDs += 1
+        const ID = physicsIDs
+        mesh.userData.ID = ID
+
+        const physicsObject = { RB: rigidBody, COLLIDER: collider, MESH: mesh, ID: ID }
+        physicsObjects.push(physicsObject);
+
+        return physicsObject;
+      }
+
+      const debugRayGroup = new THREE.Group();
+      const worldPoint = new THREE.Vector3();
+      const dir = new THREE.Vector3();
+      const cameraPos = new THREE.Vector3();
+      const occlusionRaycaster = new THREE.Raycaster();
+
+      function getPercentageVisible(mesh, showDebug = false) {
+
+        const occluders = IST.scene.children.filter(obj => obj !== mesh && obj !== debugRayGroup);
+
+        const samplePoints = mesh.userData.propVisibleData.SAMPLE_POINTS;
+
+        IST.camera.getWorldPosition(cameraPos);
+
+        let visible = 0;
+
+        if (showDebug) {
+          debugRayGroup.clear();
+        }
+
+        for (const localPoint of samplePoints) {
+
+          worldPoint.copy(localPoint).applyMatrix4(mesh.matrixWorld);
+
+          dir.subVectors(worldPoint, cameraPos).normalize();
+
+          const dist = cameraPos.distanceTo(worldPoint);
+
+          occlusionRaycaster.set(cameraPos, dir);
+          occlusionRaycaster.far = dist - 0.01;
+
+          const hits = occlusionRaycaster.intersectObjects(
+            occluders,
+            true
+          );
+
+          const isVisible = hits.length === 0;
+
+          if (isVisible) {
+            visible++;
+          }
+
+          if (showDebug) {
+
+            const geometry = new THREE.BufferGeometry()
+              .setFromPoints([
+                cameraPos.clone(),
+                worldPoint.clone()
+              ]);
+
+            const material = new THREE.LineBasicMaterial({
+              color: isVisible ? 0x00ff00 : 0xff0000
+            });
+
+            debugRayGroup.add(
+              new THREE.Line(geometry, material)
+            );
+          }
+        }
+
+        return {
+          visibilityRatio: visible / samplePoints.length,
+          visible,
+          total: samplePoints.length
+        };
+      }
+
+      function createPhysicsObjectOld(mesh, spawnPosition, mass = null) {
+        mesh.geometry.computeBoundingBox();
+        const size = new THREE.Vector3();
+        mesh.geometry.boundingBox.getSize(size);
+        size.divideScalar(2);
+
+        let rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
+          .setTranslation(spawnPosition.x, spawnPosition.y, spawnPosition.z);
+
+        rigidBodyDesc.setRotation({
+          x: mesh.quaternion.x,
+          y: mesh.quaternion.y,
+          z: mesh.quaternion.z,
+          w: mesh.quaternion.w
+        }, true);
+
+        rigidBodyDesc.setCcdEnabled(true);
+
+        let colliderDesc = RAPIER.ColliderDesc.cuboid(size.x, size.y, size.z)
+
+        if (mass) {
+          colliderDesc.setDensity(0);
+        }
+
+        const rigidBody = world.createRigidBody(rigidBodyDesc);
+        const collider = world.createCollider(colliderDesc, rigidBody);
+
+        if (mass) {
+          rigidBody.setAdditionalMass(mass, true);
+        }
+
+        mesh.position.copy(rigidBody.translation());
+        mesh.quaternion.copy(rigidBody.rotation());
+        mesh.userData.RB = rigidBody
+        mesh.userData.COLLIDER = collider
+
+        physicsIDs += 1
+        const ID = physicsIDs
+        mesh.userData.ID = ID
+
+        const physicsObject = { RB: rigidBody, COLLIDER: collider, MESH: mesh, ID: ID }
+        physicsObjects.push(physicsObject);
+
+        return physicsObject;
+      }
+
+
+
+      // Loading Manager
+      const manager = new THREE.LoadingManager();
+
+
+      //scene = new THREE.Scene();
+      IST.scene.add(debugRayGroup);
+
+      //camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+
+      function mouseToWorld(distanceTarget = null) {
+        // distanceTarget determines how far away from the camera this position will be
+
+        // Set world pointer to be x and y NDC 
+        worldPointer.set(pointer.x, pointer.y, 0)
+
+        // Convert NDC to world - This places the object at the position of the camera
+        worldPointer.unproject(IST.camera);
+
+        // Subtract the camera position from it
+        worldPointer.sub(IST.camera.position).normalize();
+
+        // Calculate how far away the object is 
+        let distance
+        if (distanceTarget == null) {
+          // If no object provided, place the object at the zero point of the scene
+          distance = IST.camera.position.length()
+        } else {
+          // Else maintain its current distance
+          distance = IST.camera.position.distanceTo(distanceTarget)
+        }
+
+        // Add this distance to the coords
+        worldPointer.multiplyScalar(distance)
+
+        // Create final position
+        worldPosition.copy(IST.camera.position).add(worldPointer)
+
+        return (worldPosition);
+
+      }
+
+      function stop() {
+        //cancelAnimationFrame(requestID)
+        clearInterval(physicsIntervalID)
+        clearTimeout(messageBoxTimeoutID)
+        clearInterval(checkingID)
+        controlsEnabled = false
+      }
+      function start() {
+        stop()
+        physicsIntervalID = setInterval(physicsStep, 1000 / 60)
+      }
+
+      initBasicScene()
+
+      window.addEventListener('keydown', function (event) {
+        if (controlsEnabled) {
+          if (event.key == 'Shift') {
+            if (selectedObject === null) {
+              handEnabled = true
+              if (pointerInitialized) moveHand()
+            }
+          }
+
+          if (event.key == '-' || event.key == '_') {
+            if (selectedObject === null & handEnabled === true) {
+              handDistance.y = clamp(handDistance.y + 1, 0, 15)
+              moveHand()
+            }
+          }
+          if (event.key == '=' || event.key == '+') {
+            if (selectedObject === null & handEnabled === true) {
+              handDistance.y = clamp(handDistance.y - 1, 0, 15)
+              moveHand()
+            }
+          }
+        }
+
+      })
+
+      window.addEventListener('keyup', function (event) {
+        if (controlsEnabled) {
+          if (event.key == 'Shift') {
+            handEnabled = false
+            moveHand(OFFSCREEN)
+          }
+        }
+
+      })
+
+
+      IST.onPointerMove(function () {
+        if (controlsEnabled) {
+          pointerInitialized = true
+
+          if (handEnabled && selectedObject === null) {
+            moveHand()
+          }
+
+          if (selectedObject && handEnabled === false) {
+            moveObject()
+          }
+        }
+      })
+
+      IST.onPointerDown(function () {
+        if (controlsEnabled) {
+          if (handEnabled === false && selectedObject === null) {
+            //console.log(IST.currentRaycastObject)
+            selectedObject = IST.currentRaycastObject //raycastScene()
+
+            if (selectedObject !== null) {
+              selectedObject.userData.RB.setBodyType(RAPIER.RigidBodyType.Fixed, true);
+
+              const percentVisible = getPercentageVisible(selectedObject).visibilityRatio
+
+              if (percentVisible > 0.50) {
+                moveObject()
+              } else {
+                selectedObject.userData.RB.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
+                selectedObject = null
+                displayMessage("Too many objects in the way! <br> Move these if you want to pick this block up!")
+              }
+            }
+          }
+        }
+      })
+
+      IST.onPointerUp(function () {
+        if (controlsEnabled) {
+          if (selectedObject) {
+            collectionRaycaster.setFromCamera(IST.pointer, IST.camera);
+            const intersects = collectionRaycaster.intersectObjects(collectionPlanes);
+
+            if (intersects.length > 0) {
+              for (let i = 0; i < intersects.length; i++) {
+                const obj = intersects[i].object
+                if (obj.name == 'CollectPlane') {
+                  collectItem(selectedObject)
+                } else if (obj.name == 'DiscardPlane') {
+                  discardItem(selectedObject)
+                }
+                selectedObject = null
+              }
+
+            } else {
+              selectedObject.userData.RB.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
+              selectedObject = null
+            }
+          }
+        }
+      })
+
+
+      function collectItem(item) {
+        totalCollectedCount++
+        totalCollectedThisBucket++
+        updateScoreGUI('totalCollected', totalCollectedCount)
+
+        if (item.userData.isTarget) {
+          correctCount++
+          totalTargetsCollectedCount++
+          totalTargetsCollectedThisBucket++
+          updateScoreGUI('correct', correctCount)
+        } else {
+          incorrectCount++
+          totalDistractorsCollectedCount++
+          totalDistractorsCollectedThisBucket++
+          updateScoreGUI('incorrect', incorrectCount)
+
+        }
+
+        const obj = getPhysicsObject(item.userData.ID)
+        removeObject(obj)
+        console.log('collect')
+      }
+
+      function discardItem(item) {
+        totalDiscardedCount++
+        totalDiscardedThisBucket++
+
+        updateScoreGUI('totalDiscarded', totalDiscardedCount)
+
+        if (item.userData.isTarget) {
+          incorrectCount++
+          totalTargetsDiscardedCount++
+          totalTargetsDiscardedThisBucket++
+          updateScoreGUI('incorrect', incorrectCount)
+        } else {
+          totalDistractorsDiscardedCount++
+          totalDistractorsDiscardedThisBucket++
+        }
+
+        const obj = getPhysicsObject(item.userData.ID)
+        removeObject(obj)
+
+      }
+
+      const shuffler_quat = new THREE.Quaternion()
+
+
+      function moveHand(target = null) {
+        if (target === null) {
+          target = IST.mouseToWorld(handDistance)
+        }
+
+        handObject.RB.setTranslation({ x: target.x, y: target.y, z: target.z }, true);
+        handObject.RB.setLinvel({ x: 0, y: 0, z: 0 }, true);   // Reset velocity
+        handObject.RB.setAngvel({ x: 0, y: 0, z: 0 }, true);   // Reset spin
+        handObject.MESH.position.copy(handObject.RB.translation());
+      }
+
+      function moveObject(target = null) {
+        if (target === null) {
+          target = IST.mouseToWorld(selectedCubeDistance)
+        }
+
+        selectedObject.userData.RB.setTranslation({ x: target.x, y: target.y, z: target.z }, true);
+        selectedObject.userData.RB.setLinvel({ x: 0, y: 0, z: 0 }, true);   // Reset velocity
+        selectedObject.userData.RB.setAngvel({ x: 0, y: 0, z: 0 }, true);   // Reset spin
+        selectedObject.position.copy(selectedObject.userData.RB.translation());
+      }
+
+      function physicsStep() {
+        for (let i = physicsObjects.length - 1; i >= 0; i--) {
+          const PhysObj = physicsObjects[i];
+          const RB = PhysObj.RB;
+          const mesh = PhysObj.MESH;
+          mesh.position.copy(RB.translation());
+          mesh.quaternion.copy(RB.rotation());
+
+          if (mesh.position.y < REMOVE_DIST_SQ) {
+            removeObject(PhysObj);
+            console.log('uh oh')
+          }
+
+          /*if (mesh.position.distanceToSquared(originPoint) > REMOVE_DIST_SQ) {
+              removeObject(PhysObj);
+              console.log('uh oh')
+          }*/
+        }
+        physicsHelper.update();
+        world.step();
+        //stats.update();
+      }
+      function getBoxSurfaceSamplesWorld(model, numSamples) {
+        const { LOCAL_BOX, FACES } = model.userData.propVisibleData;
+
+        model.updateWorldMatrix(true, false);
+        const worldBox = LOCAL_BOX.clone().applyMatrix4(model.matrixWorld);
+
+        const size = new THREE.Vector3();
+        worldBox.getSize(size);
+        const half = { x: size.x / 2, y: size.y / 2, z: size.z / 2 };
+        const center = worldBox.getCenter(new THREE.Vector3());
+
+        const points = [];
+        const normals = [];
+
+        const perFace = Math.max(1, Math.round(numSamples / 6));
+        const grid = Math.max(1, Math.ceil(Math.sqrt(perFace)));
+
+        FACES.forEach(face => {
+          for (let i = 0; i < grid; i++) {
+            for (let j = 0; j < grid; j++) {
+              const u = -half[face.du] + ((i + 0.5) / grid) * 2 * half[face.du];
+              const v = -half[face.dv] + ((j + 0.5) / grid) * 2 * half[face.dv];
+
+              const p = new THREE.Vector3();
+              p[face.axis] = face.sign * half[face.axis];
+              p[face.du] = u;
+              p[face.dv] = v;
+              p.add(center);
+
+              const n = new THREE.Vector3();
+              n[face.axis] = face.sign;
+
+              points.push(p);
+              normals.push(n);
+            }
+          }
+        });
+
+        return { points, normals };
+      }
+
+      function getSphereSurfaceSamplesWorld(sphere, numSamples) {
+        const points = [];
+        const normals = [];
+        const { center, radius } = sphere;
+
+        for (let i = 0; i < numSamples; i++) {
+          const theta = Math.acos(1 - (2 * (i + 0.5)) / numSamples);
+          const phi = Math.PI * (1 + Math.sqrt(5)) * i;
+
+          const local = new THREE.Vector3(
+            radius * Math.sin(theta) * Math.cos(phi),
+            radius * Math.sin(theta) * Math.sin(phi),
+            radius * Math.cos(theta)
+          );
+          points.push(local.clone().add(center));
+          normals.push(local.clone().normalize());
+        }
+
+        return { points, normals };
+      }
+
+      function getVisibilityPercentage(target, scene, numSamples = 16, boundsType = 'box') {
+        let visibleSamples = 0;
+
+        const box = new THREE.Box3().setFromObject(target);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const charSize = Math.max(size.x, size.y, size.z) || 1;
+
+        const { points: samplePoints, normals } = getBoxSurfaceSamplesWorld(target, numSamples);
+
+        // GLBs are groups with multiple meshes, so "self" is now a set, not one mesh
+        const targetMeshes = new Set();
+        target.traverse(o => { if (o.isMesh) targetMeshes.add(o); });
+
+        for (let i = 0; i < samplePoints.length; i++) {
+          const samplePoint = samplePoints[i];
+          const normal = normals[i];
+
+          const toCam = IST.camera.position.clone().sub(samplePoint).normalize();
+          if (normal.dot(toCam) < 0) continue;
+
+          const dir = toCam;
+          const nudge = dir.clone().multiplyScalar(charSize * 0.01);
+          const rayOrigin = samplePoint.clone().add(nudge);
+
+          raycaster.set(rayOrigin, dir);
+          const hits = raycaster.intersectObjects(scene.children.filter(c => !c.userData.debugRay), true);
+
+          const isVisible = hits.length === 0 || targetMeshes.has(hits[0].object);
+          if (isVisible) visibleSamples++;
+
+        }
+        return visibleSamples / samplePoints.length;
+      }
+
+
+      function initBasicScene() {
+        // Get bucket
+        const bucketMesh = findLoadedObject("Bucket")
+        IST.scene.add(bucketMesh)
+
+        // Create physics for it
+        const bucket1 = createBucket(bucketMesh, 'trimesh');
+
+
+        // Sort out the hand
+        const handMesh = findLoadedObject('Hand')
+        //IST.scene.add(handMesh)
+        handObject = createShuffler(handMesh, handMesh.position, true)
+        moveHand(OFFSCREEN)
+      }
+
+      function findLoadedObject(name, arrayToSearch = null) {
+        // If supplied with a specific array to search, it will do so 
+        if (arrayToSearch != null) {
+          return (arrayToSearch.find(obj => obj.name === name));
+        } else {
+          return (loadedStimuli.find(obj => obj.name === name));
+        }
+      }
+
+
+
+      function createStimuli() {
+        let material
+        let isTarget
+        const stimuliToReturn = []
+
+        for (let i = 0; i < 500; i++) {
+          //findLoadedObject()
+          const legoPiece = _.sample(masterLegoPieces).clone()
+          if (i <= 50) {
+            material = new THREE.MeshStandardMaterial({ color: 0xd7c300, roughness: 1 }); // Yellow
+            isTarget = true
+          } else {
+            material = new THREE.MeshStandardMaterial({ color: _.sample(colourList), roughness: 1 });
+            isTarget = false
+          }
+
+          legoPiece.traverse(
+            function (obj) {
+              if (obj.isMesh) {
+                obj.material = obj.material.clone();
+                obj.material = material
+              }
+            });
+
+          legoPiece.userData.isTarget = isTarget
+          stimuliToReturn.push(legoPiece)
+        }
+
+        return (stimuliToReturn)
+      }
+
+      function placeStimuli(stimuliToPlace) {
+        const angleStep = 137.5 * (Math.PI / 180);
+        const radius = 2.0;
+        const heightStep = 0.3;
+        const baseY = 20;
+
+        for (let i = 0; i < stimuliToPlace.length; i++) {
+          const cube = stimuliToPlace[i];
+
+          const angle = i * angleStep;
+
+          const x = radius * Math.cos(angle);
+          const z = radius * Math.sin(angle);
+          const y = baseY + i * heightStep;
+
+          cube.position.set(x, y, z);
+          cube.rotation.set(
+            _.random(-6.28, 6.28, true),
+            _.random(-6.28, 6.28, true),
+            _.random(-6.28, 6.28, true)
+          );
+
+          const tempPhysicsObj = createPhysicsObject(cube);
+
+          tempPhysicsObj.RB.setAngvel(
+            { x: _.random(0, 1.0, true), y: _.random(0, 1.0, true), z: _.random(0, 1.0, true) },
+            true
+          );
+          tempPhysicsObj.RB.setLinvel({ x: 0, y: _.random(-3.0, 0.0, true), z: 0 }, true);   // Reset velocity
+
+          IST.addStimulusToScene(cube)
+          raycastableObjects.push(cube);
+        }
+      }
+
+      function setupTrial() {
+        //turnOnLoadingScreen("Fetching the bucket, please wait!")
+
+        const cols = 6;
+        const spacing = 1.5;
+        const ySpacing = 0.5
+        const offset = (cols * spacing) / 2;
+        const xOffset = 0.5
+        const zOffset = 1
+
+        for (let i = 0; i < 500; i++) {
+          let geometry
+          //const material = new THREE.MeshStandardMaterial({ color: 0xFFFFFF * Math.random() });
+          let material
+          let isTarget = false
+
+          if (i % 20 === 0) {
+            geometry = new THREE.BoxGeometry(_.random(0.1, 0.5, true), _.random(0.1, 0.5, true), _.random(0.1, 0.5, true));
+            //geometry = new THREE.BoxGeometry(1, _.random(0.1, 1, true), 1);
+            //geometry = new THREE.SphereGeometry(_.random(0.5, 0.75, true), 16, 8);
+            material = new THREE.MeshStandardMaterial({ color: 0xd7c300 }); // Yellow
+            isTarget = true
+          } else {
+            geometry = new THREE.BoxGeometry(1, _.random(0.1, 1, true), 1);
+            //geometry = new THREE.SphereGeometry(_.random(0.5, 0.75, true), 16, 8);
+            //material = new THREE.MeshStandardMaterial({ color: 0xcc1100 });
+            material = new THREE.MeshStandardMaterial({ color: _.sample(colourList) });
+          }
+
+          //const red_material = new THREE.MeshStandardMaterial({ color: 0xcc1100 });
+          //const blue_material = new THREE.MeshStandardMaterial({ color: 0x4169E1 });
+          cube = new THREE.Mesh(geometry, material);
+
+          const sampler = new MeshSurfaceSampler(cube).build();
+
+          const temp = new THREE.Vector3();
+          const samplePoints = [];
+
+          for (let i = 0; i < 50; i++) {
+            sampler.sample(temp);
+            samplePoints.push(temp.clone()); // local-space point
+          }
+
+          cube.userData.propVisibleData = {
+            SAMPLE_POINTS: samplePoints
+          };
+
+          cube.userData.isTarget = isTarget
+          cube.rotation.set(_.random(-6.28, 6.28, true), _.random(-6.28, 6.28, true), _.random(-6.28, 6.28, true))
+
+          const layer = Math.floor(i / (cols * cols)); // which XZ plane
+          const indexInLayer = i % (cols * cols);
+
+          const row = Math.floor(indexInLayer / cols); // Z row
+          const col = indexInLayer % cols;             // X col
+
+          // Snake in X every row
+          const snakeCol = row % 2 === 0 ? col : (cols - 1 - col);
+          // Snake in Z every layer
+          const snakeRow = layer % 2 === 0 ? row : (cols - 1 - row);
+
+          cube.position.set(
+            snakeCol * spacing - offset + xOffset,  // X
+            5 + layer * spacing + ySpacing,                    // Y
+            snakeRow * spacing - offset + zOffset           // Z
+          );
+          const tempPhysicsObj = createPhysicsObject(cube);
+          tempPhysicsObj.RB.setAngvel({ x: 0.0, y: 30.0, z: 0.0 }, true);
+          IST.scene.add(cube);
+          raycastableObjects.push(cube)
+        }
+
+
+        const geometry = new THREE.SphereGeometry(1.5, 16, 8);
+        const material = new THREE.MeshBasicMaterial({ color: 0xffff * Math.random() });
+        const shufflerMesh = new THREE.Mesh(geometry, material);
+        // Add them to scene
+      }
+      function trialStart() {
+        IST.camera.position.set(0, 150, 50)
+        IST.camera.lookAt(0, 0, 0)
+
+        // Unhide canvas
+        scoreGUI.style.display = 'flex'
+
+        // start trial
+        start()
+      }
+
+      function collectTrialData() {
+        const RT = performance.now() - bucketStartTime;
+
+        basicDataObject.RT_THIS_BUCKET.push(RT)
+        basicDataObject.BUCKET_NUMBER.push(currentBucketNum)
+        basicDataObject.TARGET_BLOCKS_COLLECTED_THIS_BUCKET.push(totalTargetsCollectedThisBucket)
+        basicDataObject.DISTRACTOR_BLOCKS_COLLECTED_THIS_BUCKET.push(totalDistractorsCollectedThisBucket)
+        basicDataObject.TARGET_BLOCKS_DISCARDED_THIS_BUCKET.push(totalTargetsDiscardedThisBucket)
+        basicDataObject.DISTRACTOR_BLOCKS_DISCARDED_THIS_BUCKET.push(totalDistractorsDiscardedThisBucket)
+        basicDataObject.TOTAL_BLOCKS_COLLECTED_THIS_BUCKET.push(totalCollectedThisBucket)
+        basicDataObject.TOTAL_BLOCKS_DISCARDED_THIS_BUCKET.push(totalDiscardedThisBucket)
+
+        console.log(basicDataObject)
+
+      }
+
+      function collectOverallData() {
+        basicDataObject.TOTAL_BLOCKS_COLLECTED.push(totalCollectedCount)
+        basicDataObject.TOTAL_BLOCKS_DISCARDED.push(totalDiscardedCount)
+        basicDataObject.TOTAL_TARGETS_COLLECTED.push(totalTargetsCollectedCount)
+        basicDataObject.TOTAL_DISTRACTORS_COLLECTED.push(totalDistractorsCollectedCount)
+        basicDataObject.TOTAL_TARGETS_DISCARDED.push(totalTargetsDiscardedCount)
+        basicDataObject.TOTAL_DISTRACTORS_DISCARDED.push(totalDistractorsDiscardedCount)
+      }
+
+      //placeStimuli();
+      function clearScene() {
+        for (let i = raycastableObjects.length - 1; i >= 0; i--) {
+          const objToRemove = getPhysicsObject(raycastableObjects[i].userData.ID);
+          removeObject(objToRemove);
+        }
+      }
+
+      function processLoadedMeshes() {
+
+        for (let i = 0; i < IST.loadedModels.length; i++) {
+          const loadedModel = IST.loadedModels[i]
+          if (loadedModel.name == 'Limits') {
+            loadedModel.children.forEach(object => {
+              const limit = createBucket(object, 'cuboid')
+              loadedStimuli.push(object);
+            });
+
+          } else if (loadedModel.name == 'hand') {
+            const model = loadedModel.children[0]
+            //handMesh.position.set(-10,0,0)
+            const arm_geometry = new THREE.CylinderGeometry(0.5, 0.5, 25, 8);
+            const arm_material = new THREE.MeshStandardMaterial({ color: 0x282626 });
+            const arm = new THREE.Mesh(arm_geometry, arm_material);
+            arm.rotateX(1.5708)
+            arm.position.y = -2
+            arm.position.z = -10
+            model.add(arm);
+            model.name = 'Hand'
+
+            loadedStimuli.push(model)
+          }
+          else if (loadedModel.name.includes("Bucket")) {
+            const model = loadedModel.children[0];
+            model.name = 'Bucket'
+
+            model.traverse(function (obj) {
+              if (obj.isMesh) {
+                obj.material = new THREE.MeshStandardMaterial({ color: 0x1b1b1b })
+              }
+
+            });
+
+            // Save to array 
+            loadedStimuli.push(model);
+
+          } else if (loadedModel.name.includes('Plane')) {
+            if (loadedModel.name.includes('Collect')) {
+              const model = loadedModel
+
+              model.traverse(function (obj) {
+                if (obj.isMesh) {
+                  obj.name = "CollectPlane"
+                }
+              })
+              model.name = "CollectPlane"
+              //model.rotateX(1.5708)
+              model.scale.set(3, 3, 3)
+              model.position.x = -12;
+              model.position.y = 3
+
+              loadedStimuli.push(model);
+              IST.scene.add(model)
+              collectionPlanes.push(model)
+              //raycastableObjects.push(model)
+            } else {
+              const model = loadedModel
+              model.traverse(function (obj) {
+                if (obj.isMesh) {
+                  obj.name = "DiscardPlane"
+                }
+              })
+              model.name = "DiscardPlane"
+
+              //model.rotateX(1.5708)
+              model.scale.set(3, 3, 3)
+              model.position.x = 12;
+              model.position.y = 3
+
+              loadedStimuli.push(model);
+              IST.scene.add(model)
+              collectionPlanes.push(model)
+              //raycastableObjects.push(model)
+            }
+
+          }
+          else {
+            const model = loadedModel.children[0]
+            //model.scale.set(0.1,0.1,0.1)
+
+
+            const sampler = new MeshSurfaceSampler(model).build();
+
+            const temp = new THREE.Vector3();
+            const samplePoints = [];
+
+            for (let i = 0; i < 30; i++) {
+              sampler.sample(temp);
+              samplePoints.push(temp.clone()); // local-space point
+            }
+
+            model.userData.propVisibleData = {
+              SAMPLE_POINTS: samplePoints
+            };
+
+            model.name = loadedModel.name
+
+            loadedStimuli.push(model)
+            masterLegoPieces.push(model)
+          }
+
+        }
+      }
+
+
+
+
+
+      const WELCOME_TRIAL = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
+    <h2>Welcome to the experiment.</h2> 
+    <p>Your task is to search through virtual buckets of LEGO and collect as many <b>yellow</b> LEGO blocks as possible within <b>five</b> minutes (<span style="color:red">set to 3 for now for demo</span>).</p>
+    
+    <br>
+    <br>
+
+    <h2>Controls</h2>
+    <ul align = 'left'>
+    <li>To pick up and move a block simply click and hold it with your cursor and then move it to wherever you want.</li>
+    <li>To collect a LEGO block, drag it over to the green box on the left of the screen and drop it there.
+    <li>To throw away a LEGO block, drag it over to the red box on the right of the screen and drop it there.</li>
+    <li>Sometimes you may want to "shuffle" up the contents of the bucket. To do so, hold down the <button id="nextBucket">⇧ Shift</button> key and rummage your cursor through the box.</li>
+    <li>You can move onto a new bucket of LEGO whenever you want by pressing the <button id="nextBucket">Next Bucket</button> button at the bottom of the screen.</li>
+    </ul>
+
+    <img src = 'Textures/PhysicsDragAndDrop/instructionImage.png' style = "width:50vw"></img>
+
+    <br>
+    <br>
+    <h2>Ready?</h2>
+    Press the button below to begin!
+    `,
+        choices: ['Start Collecting']
+      };
+
+      const SEARCH_TRIAL = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: "",
+        trial_duration: experimentLength,
+        choices: ['NO KEYS'],
+        on_start() {
+          fetchBucket();
+        },
+        on_finish() {
+          stop()
+          collectTrialData()
+          collectOverallData()
+          clearScene()
+          IST.turnOffLoadingScreen();
+          //threeCanvas.style.display = 'none';
+          scoreGUI.style.display = 'none';
+          messageBox.style.display = 'none';
+
+          IST.turnOnLoadingScreen("Saving data please wait!")
+          //turnOffLoadingScreen();
+          // Save data here
+          saveData(basicDataObject)
+          console.log('End!')
+        }
+      };
+
+      const DEBRIEF_TRIAL = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: "Debreif Trial",
+        choices: ['Finish Experiment'],
+        on_finish() {
+          // Do whatever we need to do 
+          //jatos.endStudy(true, jatosMessage)
+        }
+      };
+
+      timeline.push(WELCOME_TRIAL, SEARCH_TRIAL, DEBRIEF_TRIAL);
+
+      IST.scene.add(physicsHelper);
+
+
+      IST.turnOffLoadingScreen();
+      //loadingScreen.style.display = 'none';
+      jsPsych.run(timeline);
+    });
+
+
+
+
+
+
+
+
+
+
+  </script>
+</body>
+
+</html>
