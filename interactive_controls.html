@@ -6,15 +6,99 @@
     <title>Interactive Search Toolbox</title>
     <link type="text/css" rel="stylesheet" href="styles.css">
     <style>
-        body{
+        body {
             background-color: #c7c7c7;
         }
+
+        #debugGridToggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            max-width: 30%;
+            max-height: 40%;
+            overflow: scroll;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            visibility: hidden;
+            gap: 6px;
+        }
+
+        .settingsRow {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+        }
+
+        #controlSettings{
+            display: none;
+        }
     </style>
-    
+
     <script type="module" src="IST.min.js"></script>
 </head>
 
 <body>
+    <div id="debugGridToggle">
+        <div>
+            Select control type:
+            <select name="controls" id="controlList">
+                <option value="" selected disabled hidden></option>
+                <option value="orbit">Orbit</option>
+                <option value="dragToRotate">Drag to Rotate</option>
+                <option value="drag">Drag and Drop</option>
+                <option value="firstPerson">First Person</option>
+                <option value="maskOpaque">Mask</option>
+                <option value="maskBlur">Mask (Blur)</option>
+            </select>
+        </div>
+        <div id="controlInstructions">
+            Description: 
+        </div>
+        <div id='controlSettings'>
+            Settings:
+            <div id = "dragToRotateSettings">
+                <div class="settingsRow">
+                    <label for="dragToRotateSensitivity" style="flex:1">Cursor Sensitivity</label>
+                    <input id='dragToRotateSensitivity' name='dragToRotateSensitivity' type="number" value = 200>
+                </div>
+            </div>
+            <div id = "maskControlSettings">
+                <div class="settingsRow" id = "maskColourRow">
+                    <label for="maskColour" style="flex:1">Mask Colour</label>
+                    <input id='maskColour' name='maskColour' value="#ff0000" type="color" style="flex:1">
+                </div>
+                <div class="settingsRow" id = "maskOpacityRow">
+                    <label for="maskOpacity" style="flex:1">Mask Opacity</label>
+                    <input id='maskOpacity' name='maskOpacity' type="range" min="0" max="1" step=0.1 value=1>
+                </div>
+                <div class="settingsRow">
+                    <label for="maskRadius" style="flex:1">Mask Radius</label>
+                    <input id='maskRadius' name='maskRadius' type="number" value = 0.1 step = 0.025>
+                </div>
+                <div class="settingsRow">
+                    <label for="maskFeather" style="flex:1">Mask Feather</label>
+                    <input id='maskFeather' name='maskFeather' type="number" value = 0.05 step = 0.0025>
+                </div>
+                <div class="settingsRow" id="blurRow">
+                    <label for="blurIntensity" style="flex:1">Blur Intensity</label>
+                    <input id='blurIntensity' name='blurIntensity' type="number" value = 2>
+                </div>
+
+                <div class="settingsRow" id="blurPassesRow">
+                    <label for="blurPasses" style="flex:1">No. Blur Passes</label>
+                    <input id='blurPasses' name='blurPasses' type="number" value = 4>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
     <script type="module">
         // EXAMPLES OF ALL AVAILABLE INTERACTIVE CONTROLS
 
@@ -22,6 +106,123 @@
         await IST.init()
 
         IST.turnOnLoadingScreen("Loading, please wait...");
+
+        
+        
+        const showDebugGridToggle = document.getElementById('debugGridToggle');
+        const controlList = document.getElementById('controlList');
+        const dragToRotateSettings = document.getElementById('dragToRotateSettings')
+        const maskControlSettings = document.getElementById('maskControlSettings')
+        const controlSettings = document.getElementById('controlSettings')
+        const controlInstructions = document.getElementById('controlInstructions')
+        
+        const maskColourRow = document.getElementById('maskColourRow')
+        const maskOpacityRow = document.getElementById('maskOpacityRow')
+
+        const blurRow = document.getElementById('blurRow')
+        const blurPassesRow = document.getElementById('blurPassesRow')
+
+        const dragToRotateSensitivity = document.getElementById('dragToRotateSensitivity')
+        const maskColour = document.getElementById('maskColour')
+        const maskOpacity = document.getElementById('maskOpacity')
+        const maskRadius = document.getElementById('maskRadius')
+        const maskFeather = document.getElementById('maskFeather')
+        const blurIntensity = document.getElementById('blurIntensity')
+        const blurPasses = document.getElementById('blurPasses')
+        
+
+        dragToRotateSensitivity.addEventListener('input',(event) => {IST.setOverallDragToRotateSensitivity(event.target.value)})
+        maskColour.addEventListener('input',(event) => {IST.setMaskColour(event.target.value)})
+        maskOpacity.addEventListener('input',(event) => {IST.setMaskColour(maskColour.value,event.target.value)})
+        maskRadius.addEventListener('input',(event) => {IST.setMaskRadius(event.target.value, maskFeather.value)})
+        maskFeather.addEventListener('input',(event) => {IST.setMaskRadius(maskRadius.value,event.target.value)})
+        blurIntensity.addEventListener('input',(event) => {IST.setBlurIntensity(event.target.value)})
+        blurPasses.addEventListener('input',(event) => {
+            IST.enableMaskControls({ maskType: 'blur', numberOfBlurPasses: event.target.value})
+            IST.setMaskRadius(maskRadius.value, maskFeather.value)
+            IST.setBlurIntensity(blurIntensity.value)
+        })
+        
+
+
+        controlList.addEventListener('input', function (event) {
+            const value = event.target.value;
+
+            controlSettings.style.display = 'none';
+            dragToRotateSettings.style.display = 'none';
+            maskControlSettings.style.display = 'none';
+
+            maskColourRow.style.display = 'none';
+            maskOpacityRow.style.display = 'none';
+            blurRow.style.display = 'none';
+            blurPassesRow.style.display = 'none';
+            
+            switch (value) {
+                case "dragToRotate":
+                    IST.enableDragToRotateControls();
+                    IST.setOverallDragToRotateSensitivity(dragToRotateSensitivity.value)
+                    controlSettings.style.display = 'block';
+                    dragToRotateSettings.style.display = 'block';
+                    controlInstructions.innerText = "Description: Drag to rotate text."
+                    break;
+                case "drag":
+                    IST.enableDragControls();
+                    controlInstructions.innerText = "Description: Drag and drop text."
+                    break;
+                case "firstPerson":
+                    IST.enableFirstPersonControls();
+                    controlInstructions.innerText = "Description: First person text."
+                    break;
+                case "maskOpaque":
+                    IST.enableMaskControls({ maskType: 'opaque', colour: maskColour.value, opacity: maskOpacity.value}) 
+                    IST.setMaskRadius(maskRadius.value, maskFeather.value)
+                    controlSettings.style.display = 'block';
+                    maskControlSettings.style.display = 'block';
+
+                    maskColourRow.style.display = 'flex';
+                    maskOpacityRow.style.display = 'flex';
+
+                    controlInstructions.innerText = "Description: Mask text."
+                    break;
+                case "maskBlur":
+                    IST.enableMaskControls({ maskType: 'blur', numberOfBlurPasses: blurPasses.value}) // Opaque mask
+                    IST.setMaskRadius(maskRadius.value, maskFeather.value)
+                    IST.setBlurIntensity(blurIntensity.value)
+                    controlSettings.style.display = 'block';
+                    maskControlSettings.style.display = 'block';
+                    blurRow.style.display = 'flex';
+                    blurPassesRow.style.display = 'flex';
+
+                    controlInstructions.innerText = "Description: Blur mask text."
+                    break;
+                default:
+                    // Orbit
+                    IST.enableOrbitControls();
+                    controlInstructions.innerText = "Description: Orbit text."
+                    break;
+
+
+
+                // Drag
+                //
+
+                // Mask
+                //
+
+
+
+                //
+
+                // First Person
+                //IST.enableFirstPersonControls();
+            }
+            console.log()
+
+        })
+
+        
+
+
         const modelsToLoad = ['Models/L.glb', 'Models/T.glb', 'Models/TARGET_CUBE.glb', 'Models/Brick.glb', 'Models/HelloWorld.glb']
 
         IST.preLoadModels(modelsToLoad)
@@ -61,7 +262,7 @@
                 // Enable the type of interaction controls you want
 
                 // Drag to rotate
-                IST.enableDragToRotateControls();
+                //IST.enableDragToRotateControls();
 
                 // Orbit 
                 //IST.enableOrbitControls();
@@ -103,6 +304,7 @@
                 on_start() {
                     setupTrial(); // Gets all the stimuli adds them to the scene and enables choice of controls
                     IST.startTrial(); // We call this to start the trial - This is extremely important.
+                    showDebugGridToggle.style.visibility = 'visible';
                 },
                 stimulus: '', // We tell jspsych not to show anything for the trial, we handle that with the IST instead. 
                 on_finish() {
@@ -113,7 +315,7 @@
 
 
             IST.turnOffLoadingScreen();
-            
+
             jsPsych.run([INSTRUCTION_TRIAL, SEARCH_TRIAL]) // Run experiment
         }
         );
