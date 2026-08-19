@@ -14,7 +14,7 @@
             position: fixed;
             top: 10px;
             left: 10px;
-            max-width: 30%;
+            max-width: 25%;
             max-height: 40%;
             overflow: scroll;
             z-index: 1000;
@@ -29,14 +29,34 @@
             gap: 6px;
         }
 
+
         .settingsRow {
             display: flex;
             gap: 5px;
             width: 100%;
+            align-items: center;
+            flex-wrap: nowrap;
+            font-size: x-small;
         }
 
-        #controlSettings{
+        .settingsRow label {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .settingsRow input {
+            flex: 1 1 0;
+            min-width: 0;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #controlSettings {
             display: none;
+        }
+
+        #controlInstructions{
+            font-size: x-small;
         }
     </style>
 
@@ -46,7 +66,7 @@
 <body>
     <div id="debugGridToggle">
         <div>
-            Select control type:
+            <b>Select control type:</b>
             <select name="controls" id="controlList">
                 <option value="" selected disabled hidden></option>
                 <option value="orbit">Orbit</option>
@@ -57,42 +77,43 @@
                 <option value="maskBlur">Mask (Blur)</option>
             </select>
         </div>
-        <div id="controlInstructions">
-            Description: 
+        <div>
+            <b>Description:</b>
+            <div id="controlInstructions"></div>
         </div>
         <div id='controlSettings'>
-            Settings:
-            <div id = "dragToRotateSettings">
+            <b>Settings:</b>
+            <div id="dragToRotateSettings">
                 <div class="settingsRow">
-                    <label for="dragToRotateSensitivity" style="flex:1">Cursor Sensitivity</label>
-                    <input id='dragToRotateSensitivity' name='dragToRotateSensitivity' type="number" value = 200>
+                    <label for="dragToRotateSensitivity">Cursor Sensitivity</label>
+                    <input id='dragToRotateSensitivity' name='dragToRotateSensitivity' type="number" value=200>
                 </div>
             </div>
-            <div id = "maskControlSettings">
-                <div class="settingsRow" id = "maskColourRow">
-                    <label for="maskColour" style="flex:1">Mask Colour</label>
-                    <input id='maskColour' name='maskColour' value="#ff0000" type="color" style="flex:1">
+            <div id="maskControlSettings">
+                <div class="settingsRow" id="maskColourRow">
+                    <label for="maskColour">Mask Colour</label>
+                    <input id='maskColour' name='maskColour' value="#ff0000" type="color">
                 </div>
-                <div class="settingsRow" id = "maskOpacityRow">
-                    <label for="maskOpacity" style="flex:1">Mask Opacity</label>
+                <div class="settingsRow" id="maskOpacityRow">
+                    <label for="maskOpacity">Mask Opacity</label>
                     <input id='maskOpacity' name='maskOpacity' type="range" min="0" max="1" step=0.1 value=1>
                 </div>
                 <div class="settingsRow">
-                    <label for="maskRadius" style="flex:1">Mask Radius</label>
-                    <input id='maskRadius' name='maskRadius' type="number" value = 0.1 step = 0.025>
+                    <label for="maskRadius">Mask Radius</label>
+                    <input id='maskRadius' name='maskRadius' type="number" value=0.1 step=0.025>
                 </div>
                 <div class="settingsRow">
-                    <label for="maskFeather" style="flex:1">Mask Feather</label>
-                    <input id='maskFeather' name='maskFeather' type="number" value = 0.05 step = 0.0025>
+                    <label for="maskFeather">Mask Feather</label>
+                    <input id='maskFeather' name='maskFeather' type="number" value=0.05 step=0.0025>
                 </div>
                 <div class="settingsRow" id="blurRow">
-                    <label for="blurIntensity" style="flex:1">Blur Intensity</label>
-                    <input id='blurIntensity' name='blurIntensity' type="number" value = 2>
+                    <label for="blurIntensity">Blur Intensity</label>
+                    <input id='blurIntensity' name='blurIntensity' type="number" value=2>
                 </div>
 
                 <div class="settingsRow" id="blurPassesRow">
-                    <label for="blurPasses" style="flex:1">No. Blur Passes</label>
-                    <input id='blurPasses' name='blurPasses' type="number" value = 4>
+                    <label for="blurPasses">No. Blur Passes</label>
+                    <input id='blurPasses' name='blurPasses' type="number" value=4>
                 </div>
             </div>
 
@@ -102,20 +123,22 @@
     <script type="module">
         // EXAMPLES OF ALL AVAILABLE INTERACTIVE CONTROLS
 
-        const IST = new InteractiveSearchToolbox()
+        const IST = new InteractiveSearchToolbox({
+            threeAddons: [["Sky", 'three/addons/objects/Sky.js']]
+        })
         await IST.init()
 
         IST.turnOnLoadingScreen("Loading, please wait...");
 
-        
-        
+
+
         const showDebugGridToggle = document.getElementById('debugGridToggle');
         const controlList = document.getElementById('controlList');
         const dragToRotateSettings = document.getElementById('dragToRotateSettings')
         const maskControlSettings = document.getElementById('maskControlSettings')
         const controlSettings = document.getElementById('controlSettings')
         const controlInstructions = document.getElementById('controlInstructions')
-        
+
         const maskColourRow = document.getElementById('maskColourRow')
         const maskOpacityRow = document.getElementById('maskOpacityRow')
 
@@ -129,20 +152,20 @@
         const maskFeather = document.getElementById('maskFeather')
         const blurIntensity = document.getElementById('blurIntensity')
         const blurPasses = document.getElementById('blurPasses')
-        
 
-        dragToRotateSensitivity.addEventListener('input',(event) => {IST.setOverallDragToRotateSensitivity(event.target.value)})
-        maskColour.addEventListener('input',(event) => {IST.setMaskColour(event.target.value)})
-        maskOpacity.addEventListener('input',(event) => {IST.setMaskColour(maskColour.value,event.target.value)})
-        maskRadius.addEventListener('input',(event) => {IST.setMaskRadius(event.target.value, maskFeather.value)})
-        maskFeather.addEventListener('input',(event) => {IST.setMaskRadius(maskRadius.value,event.target.value)})
-        blurIntensity.addEventListener('input',(event) => {IST.setBlurIntensity(event.target.value)})
-        blurPasses.addEventListener('input',(event) => {
-            IST.enableMaskControls({ maskType: 'blur', numberOfBlurPasses: event.target.value})
+
+        dragToRotateSensitivity.addEventListener('input', (event) => { IST.setOverallDragToRotateSensitivity(event.target.value) })
+        maskColour.addEventListener('input', (event) => { IST.setMaskColour(event.target.value) })
+        maskOpacity.addEventListener('input', (event) => { IST.setMaskColour(maskColour.value, event.target.value) })
+        maskRadius.addEventListener('input', (event) => { IST.setMaskRadius(event.target.value, maskFeather.value) })
+        maskFeather.addEventListener('input', (event) => { IST.setMaskRadius(maskRadius.value, event.target.value) })
+        blurIntensity.addEventListener('input', (event) => { IST.setBlurIntensity(event.target.value) })
+        blurPasses.addEventListener('input', (event) => {
+            IST.enableMaskControls({ maskType: 'blur', numberOfBlurPasses: event.target.value })
             IST.setMaskRadius(maskRadius.value, maskFeather.value)
             IST.setBlurIntensity(blurIntensity.value)
         })
-        
+
 
 
         controlList.addEventListener('input', function (event) {
@@ -156,36 +179,34 @@
             maskOpacityRow.style.display = 'none';
             blurRow.style.display = 'none';
             blurPassesRow.style.display = 'none';
-            
+
             switch (value) {
                 case "dragToRotate":
                     IST.enableDragToRotateControls();
                     IST.setOverallDragToRotateSensitivity(dragToRotateSensitivity.value)
                     controlSettings.style.display = 'block';
                     dragToRotateSettings.style.display = 'block';
-                    controlInstructions.innerText = "Description: Drag to rotate text."
+                    controlInstructions.innerText = "Use the cursor rotate objects in the scene by clicking and dragging on them. Objects will rotate in place. The speed at which these rotate can be varied by changing the cursor sensitivity."
                     break;
                 case "drag":
                     IST.enableDragControls();
-                    controlInstructions.innerText = "Description: Drag and drop text."
+                    controlInstructions.innerText = "Use the cursor to drag and drop objects around the scene. Click and hold on objects using your left mouse/cursor button."
                     break;
                 case "firstPerson":
                     IST.enableFirstPersonControls();
-                    controlInstructions.innerText = "Description: First person text."
+                    controlInstructions.innerText = "In first person controls, the camera can be rotated in place to 'look around' the scene. Left click and drag anywhere in the scene to look around."
                     break;
                 case "maskOpaque":
-                    IST.enableMaskControls({ maskType: 'opaque', colour: maskColour.value, opacity: maskOpacity.value}) 
+                    IST.enableMaskControls({ maskType: 'opaque', colour: maskColour.value, opacity: maskOpacity.value })
                     IST.setMaskRadius(maskRadius.value, maskFeather.value)
                     controlSettings.style.display = 'block';
                     maskControlSettings.style.display = 'block';
-
                     maskColourRow.style.display = 'flex';
                     maskOpacityRow.style.display = 'flex';
-
                     controlInstructions.innerText = "Description: Mask text."
                     break;
                 case "maskBlur":
-                    IST.enableMaskControls({ maskType: 'blur', numberOfBlurPasses: blurPasses.value}) // Opaque mask
+                    IST.enableMaskControls({ maskType: 'blur', numberOfBlurPasses: blurPasses.value }) // Opaque mask
                     IST.setMaskRadius(maskRadius.value, maskFeather.value)
                     IST.setBlurIntensity(blurIntensity.value)
                     controlSettings.style.display = 'block';
@@ -198,90 +219,42 @@
                 default:
                     // Orbit
                     IST.enableOrbitControls();
-                    controlInstructions.innerText = "Description: Orbit text."
+                    controlInstructions.innerHTML = "Orbit controls allows the camera to orbit around a point within the scene. Use the cursor to click and drag to rotate and pan, and the scroll wheel to zoom in and out. Orbit controls is a wrapper of the <a href = 'https://threejs.org/docs/#OrbitControls' target = blank >three.js orbit controls class</a>, as such, any settings that need to be changed (e.g., camera target) must be done so through the <i><b>IST.orbitControls</b></i> variable."
                     break;
-
-
-
-                // Drag
-                //
-
-                // Mask
-                //
-
-
-
-                //
-
-                // First Person
-                //IST.enableFirstPersonControls();
             }
-            console.log()
-
         })
 
-        
+
 
 
         const modelsToLoad = ['Models/L.glb', 'Models/T.glb', 'Models/TARGET_CUBE.glb', 'Models/Brick.glb', 'Models/HelloWorld.glb']
 
         IST.preLoadModels(modelsToLoad)
-
-        IST.preloadHDRI(['Textures/smallStudio.hdr'], true) // Setting the second arguement to true automatically applies the HDRI to our scene.
-
+        IST.preloadHDRI(['Textures/InteractiveControls/puresky.hdr'], true) // Setting the second arguement to true automatically applies the HDRI to our scene.
 
         IST.onPreloadFinished(function () {
+            IST.scene.background = IST.findLoadedTexture('puresky', IST.loadedEnvs)
+            IST.scene.fog = new THREE.FogExp2(0xcccccc, 0.002);
 
             function setupTrial() {
-                let helloWorldObject = IST.findLoadedObject('HelloWorld')
-                helloWorldObject.position.x = 0
-                IST.addStimulusToScene(helloWorldObject);
-
-                let cubeObject = IST.findLoadedObject('TARGET_CUBE')
-                cubeObject.scale.set(0.5, 0.5, 0.5)
-                cubeObject.position.set(-3.5, 3, 0)
-                IST.addStimulusToScene(cubeObject);
-
-                let L_Object = IST.findLoadedObject('L')
-                L_Object.scale.set(0.15, 0.15, 0.15)
-                L_Object.position.set(3.5, 2, 0)
-                IST.addStimulusToScene(L_Object);
-
-                let T_Object = IST.findLoadedObject('T')
-                T_Object.scale.set(0.15, 0.15, 0.15)
-                T_Object.position.set(-3.5, -2, 0)
-                IST.addStimulusToScene(T_Object);
-
-                let brickObject = IST.findLoadedObject('Brick')
-                brickObject.scale.set(0.25, 0.25, 0.25)
-                brickObject.position.set(3.5, -2, 0)
-                IST.addStimulusToScene(brickObject);
-
                 IST.camera.position.z = 50;
 
-                // Enable the type of interaction controls you want
+                const cubeStimuli = []
+                for (let i = 0; i < 250; i++) {
+                    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    const cubeMaterial = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+                    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                    cubeStimuli.push(cube)
+                    //IST.addStimulusToScene(cube)
+                }
 
-                // Drag to rotate
-                //IST.enableDragToRotateControls();
 
-                // Orbit 
-                //IST.enableOrbitControls();
-
-                // Drag
-                //IST.enableDragControls(); 
-
-                // Mask
-                //IST.enableMaskControls({maskType:'opaque'}) // Opaque mask
-                //IST.setMaskRadius(0.1,0.05)
-
-                //IST.enableMaskControls({maskType:'opaque', opacity:0.5}) // Transparent mask
-                //IST.setMaskRadius(0.1,0.05)
-
-                //IST.enableMaskControls({maskType:'blur', blurIntensity: 2}) // Blurry mask
-                //IST.setMaskRadius(0.1,0.05)
-
-                // First Person
-                //IST.enableFirstPersonControls();
+                IST.placeRandomly3D({
+                    objectsToPlace: cubeStimuli,
+                    randomRotation: true,
+                    spread: 15,
+                    ignoreCollisions: true // If set to true they can overlap and clip
+                });
 
             }
 
