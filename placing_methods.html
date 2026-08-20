@@ -1,0 +1,583 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Search Toolbox</title>
+    <link type="text/css" rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background-color: #c7c7c7;
+        }
+
+        #debugGridToggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            max-width: 25%;
+            max-height: 40%;
+            overflow: scroll;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            visibility: hidden;
+            gap: 6px;
+        }
+
+
+        .settingsRow {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            align-items: center;
+            flex-wrap: nowrap;
+            font-size: x-small;
+        }
+
+        .settingsRow label {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .settingsRow input {
+            flex: 1 1 0;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        #controlSettings {
+            display: none;
+            width: 100%;
+        }
+
+        #controlInstructions{
+            font-size: x-small;
+        }
+
+        #random2DSettings, #concentricCirclesSettings, #gridSettings{
+            display: none;
+        }
+
+    </style>
+
+    <script type="module" src="IST.min.js"></script>
+</head>
+
+<body>
+    <div id="debugGridToggle">
+        <div>
+            <b>Select placing method:</b>
+            <select name="controls" id="controlList">
+                <option value="random3D" selected>Random 3D</option>
+                <option value="random2D">Random 2D</option>
+                <option value="concentricCircles">Concentric Circles</option>
+                <option value="grid">Grid</option>
+            </select>
+        </div>
+        <div>
+            <b>Description:</b>
+            <div id="controlInstructions">
+            </div>
+        </div>
+        <div>
+            <b>Choose total number of stimuli:</b>
+            <input id='totalStimuli' name='totalStimuli' type="number" value=16 min = 0 step=1>
+        </div>
+        <div id='controlSettings'>
+            <b>Settings:</b>
+            <div id="random3DSettings">
+                <div class="settingsRow" id = "3Dspread">
+                    <label for="3DSpreadInput">Spread</label>
+                    <input id='3DSpreadInput' name='3DSpreadInput' type="number" value=5 min = 0 step=0.05>
+                </div>
+
+                <div class="settingsRow" id = "3DrandomRotation">
+                    <label for="3DrandomRotationCheck">Random Rotation</label>
+                    <input type="checkbox" id="3DrandomRotationCheck" checked>
+                </div>
+                
+                <div class="settingsRow" id = "3DrandomRotateX">
+                    <label for="3DrandomXRotationCheck">Random X Rotation</label>
+                    <input type="checkbox" id="3DrandomXRotationCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "3DrandomRotateY">
+                    <label for="3DrandomYRotationCheck">Random Y Rotation</label>
+                    <input type="checkbox" id="3DrandomYRotationCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "3DrandomRotateZ">
+                    <label for="3DrandomZRotationCheck">Random Z Rotation</label>
+                    <input type="checkbox" id="3DrandomZRotationCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "3DignoreCollisions">
+                    <label for="3DignoreCollisionsCheck">Ignore Collisions</label>
+                    <input type="checkbox" id="3DignoreCollisionsCheck" !checked>
+                </div>
+
+
+            </div>
+            <div id="random2DSettings">
+                <div class="settingsRow" id = "2Dspread">
+                    <label for="2DSpreadInput">Spread</label>
+                    <input id='2DSpreadInput' name='2DSpreadInput' type="number" value=5 min = 0 step=0.05>
+                </div>
+
+                <div class="settingsRow" id = "2DaxisOrder">
+                    <label for="2DaxisOrderInput">Axis Order</label>
+                    
+                    <select name="2DaxisOrderInput" id="2DaxisOrderInput">
+                        <option value="XY" selected>XY</option>
+                        <option value="XZ">XZ</option>
+                        <option value="YZ">YZ</option>
+                    </select>
+                </div>
+
+                <div class="settingsRow" id = "2DrandomRotation">
+                    <label for="2DrandomRotationCheck">Random Rotation</label>
+                    <input type="checkbox" id="2DrandomRotationCheck" checked>
+                </div>
+                
+                <div class="settingsRow" id = "2DrandomRotateX">
+                    <label for="2DrandomXRotationCheck">Random X Rotation</label>
+                    <input type="checkbox" id="2DrandomXRotationCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "2DrandomRotateY">
+                    <label for="2DrandomYRotationCheck">Random Y Rotation</label>
+                    <input type="checkbox" id="2DrandomYRotationCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "2DrandomRotateZ">
+                    <label for="2DrandomZRotationCheck">Random Z Rotation</label>
+                    <input type="checkbox" id="2DrandomZRotationCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "2DignoreCollisions">
+                    <label for="2DignoreCollisionsCheck">Ignore Collisions</label>
+                    <input type="checkbox" id="2DignoreCollisionsCheck" !checked>
+                </div>
+
+
+            </div>
+            
+            <div id="concentricCirclesSettings">
+                <div class="settingsRow">
+                    <label for="circlesRingToUse">Ring to Use</label>
+                    <input id='circlesRingToUse' name='circlesRingToUse' type="number" value=0 min = 0 step=1>
+                    
+                    <label for="circlesRingToUseEnable">Enabled</label>
+                    <input id='circlesRingToUseEnable' name='circlesRingToUseEnable' type="checkbox" checked>
+                </div>
+                <div class="settingsRow">
+                    <label for="circlesTotalRings">Total Rings</label>
+                    <input id='circlesTotalRings' name='circlesTotalRings' type="number" value=2 min = 0 step=1>
+                </div>
+                <div class="settingsRow">
+                    <label for="circlesTotalRingSections">Total Ring Sections</label>
+                    <input id='circlesTotalRingSections' name='circlesTotalRingSections' type="number" value=8 min = 2 step=1>
+                </div>
+                <div class="settingsRow">
+                    <label for="circlesZPosition">Z Position</label>
+                    <input id='circlesZPosition' name='circlesZPosition' type="number" value=0 step=0.1>
+                </div>
+                <div class="settingsRow">
+                    <label for="circlesStartingRadius">Starting Radius</label>
+                    <input id='circlesStartingRadius' name='circlesStartingRadius' type="number" value=3 min = 0 step=0.1>
+                </div>
+                <div class="settingsRow">
+                    <label for="circlesDistanceBetweenRings">Distance Between Rings</label>
+                    <input id='circlesDistanceBetweenRings' name='circlesDistanceBetweenRings' type="number" value=3 min = 0 step=0.1>
+                </div>
+                <div class="settingsRow">
+                    <label for="circlesRandomPosition">Random Position</label>
+                    <input id='circlesRandomPosition' name='circlesRandomPosition' type="checkbox" checked>
+                </div>
+                <div class="settingsRow">
+                    <label for="circlesRandomRotation">Random Rotation</label>
+                    <input id='circlesRandomRotation' name='circlesRandomRotation' type="checkbox" checked>
+                </div>
+                <div class="settingsRow">
+                    <label for="circlesShowDebugGrid">Show Debug Grid</label>
+                    <input id='circlesShowDebugGrid' name='circlesShowDebugGrid' type="checkbox" checked>
+                </div>
+            </div>
+            <div id="gridSettings">
+                <div class="settingsRow" id = "gridRows">
+                    <label for="gridRowsInput">Rows</label>
+                    <input id='gridRowsInput' name='gridRowsInput' type="number" value=4 min = 1 step = 1>
+                </div>
+
+                <div class="settingsRow" id = "gridColumns">
+                    <label for="gridColumnsInput">Columns</label>
+                    <input id='gridColumnsInput' name='gridColumnsInput' type="number" value=6 min = 1 step = 1>
+                </div>
+
+                <div class="settingsRow" id = "gridDistanceBetween">
+                    <label for="gridDistanceBetweenInput">Distance Between</label>
+                    <input id='gridDistanceBetweenInput' name='gridDistanceBetweenInput' type="number" value=2 min = 0 step = 0.1>
+                </div>
+
+                <div class="settingsRow" id = "gridJitter">
+                    <label for="gridJitterInput">Jitter</label>
+                    <input id='gridJitterInput' name='gridJitterInput' type="number" value=0 min = 0 step = 0.01>
+                </div>
+
+                <div class="settingsRow" id ="gridCameraAxis" >
+                    <label for="gridCameraAxisInput">Camera Axis</label>
+                    <select name="gridCameraAxisInput" id="gridCameraAxisInput">
+                        <option value="X">X</option>
+                        <option value="Y">Y</option>
+                        <option value="Z" selected>Z</option>
+                    </select>
+                </div>
+
+                <div class="settingsRow" id = "gridRandomRotation">
+                    <label for="gridRandomRotationCheck">Random Rotation</label>
+                    <input type="checkbox" id="gridRandomRotationCheck" checked>
+                </div>
+                
+                <div class="settingsRow" id = "gridRandomRotateX">
+                    <label for="gridRandomRotateXCheck">Random X Rotation</label>
+                    <input type="checkbox" id="gridRandomRotateXCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "gridRandomRotateY">
+                    <label for="gridRandomRotateYCheck">Random Y Rotation</label>
+                    <input type="checkbox" id="gridRandomRotateYCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "gridRandomRotateZ">
+                    <label for="gridRandomRotateZCheck">Random Z Rotation</label>
+                    <input type="checkbox" id="gridRandomRotateZCheck" !checked>
+                </div>
+
+                <div class="settingsRow" id = "gridShowDebug">
+                    <label for="gridShowDebugCheck">Show Debug Grid</label>
+                    <input id='gridShowDebugCheck' name='gridShowDebugCheck' type="checkbox" checked>
+                </div>
+            </div>
+
+        </div>
+        <div>
+            <button id = 'placeStimuliButton'>Place Stimuli</button>
+        </div>
+
+    </div>
+    <script type="module">
+        // EXAMPLES OF ALL AVAILABLE INTERACTIVE CONTROLS
+
+        const IST = new InteractiveSearchToolbox({
+            threeAddons: [["Sky", 'three/addons/objects/Sky.js']]
+        })
+        await IST.init()
+
+        IST.turnOnLoadingScreen("Loading, please wait...");
+
+
+
+        const cubeStimuli = []
+        let shouldReProcess = false;
+
+        const totalStimuli = document.getElementById('totalStimuli');
+        const showDebugGridToggle = document.getElementById('debugGridToggle');
+        const controlList = document.getElementById('controlList');
+        const controlSettings = document.getElementById('controlSettings')
+        const controlInstructions = document.getElementById('controlInstructions')
+
+        const random3DSettings = document.getElementById('random3DSettings')
+        const _3DSpreadInput = document.getElementById('3DSpreadInput');
+        const _3DrandomRotationCheck = document.getElementById('3DrandomRotationCheck');
+        const _3DrandomXRotationCheck = document.getElementById('3DrandomXRotationCheck');
+        const _3DrandomYRotationCheck = document.getElementById('3DrandomYRotationCheck');
+        const _3DrandomZRotationCheck = document.getElementById('3DrandomZRotationCheck');
+        const _3DIgnoreCollisionsCheck = document.getElementById('3DignoreCollisionsCheck');
+        
+
+        const random2DSettings = document.getElementById('random2DSettings')
+        const _2DSpreadInput = document.getElementById('2DSpreadInput');
+        const _2DaxisOrderInput = document.getElementById('2DaxisOrderInput');
+        const _2DrandomRotationCheck = document.getElementById('2DrandomRotationCheck');
+        const _2DrandomXRotationCheck = document.getElementById('2DrandomXRotationCheck');
+        const _2DrandomYRotationCheck = document.getElementById('2DrandomYRotationCheck');
+        const _2DrandomZRotationCheck = document.getElementById('2DrandomZRotationCheck');
+        const _2DIgnoreCollisionsCheck = document.getElementById('2DignoreCollisionsCheck');
+
+        const concentricCirclesSettings = document.getElementById('concentricCirclesSettings')
+        const circlesRingToUse = document.getElementById('circlesRingToUse')
+        let ringToUseValue = Number(circlesRingToUse.value);
+        const circlesTotalRings = document.getElementById('circlesTotalRings')
+        const circlesTotalRingSections = document.getElementById('circlesTotalRingSections')
+        const circlesZPosition = document.getElementById('circlesZPosition')
+        const circlesStartingRadius = document.getElementById('circlesStartingRadius')
+        const circlesDistanceBetweenRings = document.getElementById('circlesDistanceBetweenRings')
+        const circlesRandomPosition = document.getElementById('circlesRandomPosition')
+        const circlesRandomRotation = document.getElementById('circlesRandomRotation')
+        const circlesShowDebugGrid = document.getElementById('circlesShowDebugGrid')
+        const circlesRingToUseEnable  = document.getElementById('circlesRingToUseEnable')
+        
+        circlesRingToUseEnable.addEventListener('click', function(event){
+            if(!event.target.checked){
+                circlesRingToUse.disabled=true;
+            }else{
+                circlesRingToUse.disabled=false;
+            }
+        })
+
+        const gridSettings = document.getElementById('gridSettings')
+        const gridRowsInput = document.getElementById('gridRowsInput');
+        const gridColumnsInput = document.getElementById('gridColumnsInput');
+        const gridDistanceBetweenInput = document.getElementById('gridDistanceBetweenInput');
+        const gridJitterInput = document.getElementById('gridJitterInput');
+        const gridCameraAxisInput = document.getElementById('gridCameraAxisInput');
+        const gridRandomRotationCheck = document.getElementById('gridRandomRotationCheck');
+        const gridRandomRotateXCheck = document.getElementById('gridRandomRotateXCheck');
+        const gridRandomRotateYCheck = document.getElementById('gridRandomRotateYCheck');
+        const gridRandomRotateZCheck = document.getElementById('gridRandomRotateZCheck');
+        const gridShowDebugCheck = document.getElementById('gridShowDebugCheck');
+        let gridObject = null;
+
+        totalStimuli.addEventListener('change',function(){shouldReProcess = true;})
+        let selectedMethod = 'random3D';
+        const placeStimuliButton = document.getElementById('placeStimuliButton')
+        
+        placeStimuliButton.addEventListener('click', function(event){
+
+            if(shouldReProcess){
+
+                for (let i = cubeStimuli.length - 1; i >= 0; i--) {
+                    const object = cubeStimuli[i];
+                    IST.removeStimulusFromScene(object)
+                }
+
+                cubeStimuli.length = 0;
+                
+                for(let i = 0; i < totalStimuli.value; i++){
+                    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    const cubeMaterial = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+                    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                    cubeStimuli.push(cube)
+                }
+
+                shouldReProcess = false;
+            }
+
+
+            cubeStimuli.forEach(object => {
+                object.quaternion.identity();
+            });
+
+            switch (selectedMethod) {
+                case "random3D":
+                    IST.placeRandomly3D({
+                        objectsToPlace: cubeStimuli,
+                        spread: Number(_3DSpreadInput.value),
+                        randomRotation:_3DrandomRotationCheck.checked,
+                        randomRotateX:_3DrandomXRotationCheck.checked,
+                        randomRotateY:_3DrandomYRotationCheck.checked,
+                        randomRotateZ:_3DrandomZRotationCheck.checked,
+                        ignoreCollisions: _3DIgnoreCollisionsCheck.checked
+                    })              
+                    break;
+                case "random2D":
+                    IST.placeRandomly2D({
+                        objectsToPlace: cubeStimuli,
+                        spread: Number(_2DSpreadInput.value),
+                        axisOrder: _2DaxisOrderInput.value,
+                        randomRotation:_2DrandomRotationCheck.checked,
+                        randomRotateX:_2DrandomXRotationCheck.checked,
+                        randomRotateY:_2DrandomYRotationCheck.checked,
+                        randomRotateZ:_2DrandomZRotationCheck.checked,
+                        ignoreCollisions: _2DIgnoreCollisionsCheck.checked
+                    })
+                    break;
+                case "concentricCircles":
+                    for (let i = IST.stimuliInScene.length - 1; i >= 0; i--) {
+                        const object = IST.stimuliInScene[i];
+                        if(object.name == 'debugGrid'){
+                            IST.removeStimulusFromScene(object)
+                        }
+                    }
+                    
+                    
+                    if(circlesRingToUse.disabled){
+                        ringToUseValue = null;
+                    }else{
+                        ringToUseValue = Number(circlesRingToUse.value);
+                    }
+
+                    IST.placeInConcentricRings({
+                        objectsToPlace:cubeStimuli,
+                        ringToUse:ringToUseValue,
+                        totalRings:Number(circlesTotalRings.value),
+                        totalRingSections:Number(circlesTotalRingSections.value),
+                        zPosition:Number(circlesZPosition.value),
+                        startingRadius:Number(circlesStartingRadius.value),
+                        distanceBetweenRings:Number(circlesDistanceBetweenRings.value),
+                        randomPosition:circlesRandomPosition.checked,
+                        randomRotation:circlesRandomRotation.checked,
+                        showDebugGrid:circlesShowDebugGrid.checked
+                    })
+                    break;
+                default:
+                    if(gridObject){
+                        if(gridObject.debugGrid){
+                            IST.removeStimulusFromScene(gridObject.debugGrid);
+                        }
+                    }
+                    // Grid
+                    gridObject = IST.placeOnGrid({
+                        objectsToPlace: cubeStimuli,
+                        rows: Number(gridRowsInput.value),
+                        columns: Number(gridColumnsInput.value),
+                        distanceBetween: Number(gridDistanceBetweenInput.value),
+                        jitter: Number(gridJitterInput.value),
+                        cameraAxis: gridCameraAxisInput.value,
+                        randomRotation: gridRandomRotationCheck.checked,
+                        randomRotateX: gridRandomRotateXCheck.checked,
+                        randomRotateY: gridRandomRotateYCheck.checked,
+                        randomRotateZ: gridRandomRotateZCheck.checked,
+                        showDebugGrid: gridShowDebugCheck.checked,
+                    })
+
+                    
+                    
+                    break;
+            }
+
+        })
+        
+        controlList.addEventListener('input', function (event) {
+            const value = event.target.value;
+
+            for (let i = IST.scene.children.length - 1; i >= 0; i--) {
+                const object = IST.scene.children[i];
+                if (!object.isCamera) {
+                    IST.scene.remove(object);
+                }
+            }
+            
+            controlSettings.style.display = 'none';
+            random3DSettings.style.display = 'none';
+            random2DSettings.style.display = 'none';
+            concentricCirclesSettings.style.display = 'none';
+            gridSettings.style.display = 'none';
+
+            switch (value) {
+                case "random3D":
+                    controlSettings.style.display = 'block';
+                    random3DSettings.style.display = 'block';
+                    controlInstructions.innerText = "This method will distribute objects randomly in 3D space (across all X,Y,Z axes) ensuring that objects do not collide with one another."
+                    selectedMethod = "random3D";
+                    break;
+                case "random2D":
+                    controlSettings.style.display = 'block';
+                    random2DSettings.style.display = 'block';
+                    controlInstructions.innerText = "This method will distribute objects randomly in 2D space (across X,Y axes) ensuring that objects do not collide with one another. The direction of the 2D space can be changed via the axis order setting."
+                    selectedMethod = "random2D";
+                    break;
+                case "concentricCircles":
+                    controlSettings.style.display = 'block';
+                    concentricCirclesSettings.style.display = 'block';
+                    controlInstructions.innerText = "This method will distribute objects across concentric circles. Objects can be placed either on a single circle or randomly across all circles. Numerous changes can be made via the method’s settings object."
+                    selectedMethod = "concentricCircles";
+                    break;
+                default:
+                    // grid
+                    controlSettings.style.display = 'block';
+                    gridSettings.style.display = 'block';
+                    controlInstructions.innerText = "This method will randomly distribute objects across a virtual grid. Grid size and other relevant features can be chosen via the method's settings object.";
+                    selectedMethod = "grid";
+                    break;
+            }
+        })
+
+
+
+
+        const modelsToLoad = ['Models/L.glb', 'Models/T.glb', 'Models/TARGET_CUBE.glb', 'Models/Brick.glb', 'Models/HelloWorld.glb']
+
+        IST.preLoadModels(modelsToLoad)
+        IST.preloadHDRI(['Textures/InteractiveControls/puresky.hdr'], true) // Setting the second arguement to true automatically applies the HDRI to our scene.
+
+        IST.onPreloadFinished(function () {
+            IST.scene.background = IST.findLoadedTexture('puresky', IST.loadedEnvs)
+
+            IST.enableOrbitControls();
+
+            function setupTrial() {
+                IST.camera.position.z = 150;
+
+                
+                for (let i = 0; i < totalStimuli.value; i++) {
+                    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    const cubeMaterial = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+                    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                    cubeStimuli.push(cube)
+                    //IST.addStimulusToScene(cube)
+                }
+
+
+                controlSettings.style.display = 'block';
+                random3DSettings.style.display = 'block';
+                controlInstructions.innerText = "This method will distribute objects randomly in 3D space (across all X,Y,Z axes) ensuring that objects do not collide with one another."
+
+                IST.placeRandomly3D({
+                    objectsToPlace: cubeStimuli,
+                    randomRotation: true,
+                    spread: _3DSpreadInput.value,
+                    ignoreCollisions: false // If set to true they can overlap and clip
+                });
+
+            }
+
+            // Instruction trial is where we would provide instructions on how to complete the experiment.
+            const INSTRUCTION_TRIAL = {
+                type: jsPsychHtmlButtonResponse,
+                on_start() {
+                },
+                stimulus: `
+                <h3>Welcome!</h3>
+                In this example you can test out the different interactive placing methods that are built into the Interactive Search Toolbox!
+                <br> 
+                When you are ready to start, press the button below.
+                `,
+                on_finish(data) {
+                },
+                choices: ['Continue']
+            }
+
+            const SEARCH_TRIAL = {
+                type: jsPsychHtmlKeyboardResponse,
+                on_start() {
+                    setupTrial(); // Gets all the stimuli adds them to the scene and enables choice of controls
+                    IST.startTrial(); // We call this to start the trial - This is extremely important.
+                    showDebugGridToggle.style.visibility = 'visible';
+                },
+                stimulus: '', // We tell jspsych not to show anything for the trial, we handle that with the IST instead. 
+                on_finish() {
+                    IST.endTrial(); // Call this at the end of every trial - This is extremely important. 
+                },
+                choices: ['z', 'm']
+            }
+
+
+            IST.turnOffLoadingScreen();
+
+            jsPsych.run([INSTRUCTION_TRIAL, SEARCH_TRIAL]) // Run experiment
+        }
+        );
+
+
+
+
+    </script>
+</body>
+
+</html>

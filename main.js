@@ -132,8 +132,15 @@ const examples = [
     {
         filename: 'interactive_controls',
         thumbnail: 'Textures/Thumbnails/interactive_controls.jpg',
-        title: 'Interactive Controls',
+        title: 'Interactive Controls: Playground',
         description: 'Explore the different interactive controls the IST has available.'
+    },
+
+    {
+        filename: 'placing_methods',
+        thumbnail: 'Textures/Thumbnails/placing_methods.jpg',
+        title: 'Object Placing Methods: Playground',
+        description: 'Explore the different methods the IST has availble for randomly distributing objects within a scene.'
     },
 
     {

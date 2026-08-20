@@ -33,7 +33,7 @@ body {
     width: 300px;
     min-width: 300px;
     overflow-y: scroll;
-    background-color: rgb(30, 30, 30);
+    background-color: #1e1e1e;
 
     display: flex;
     flex-direction: column;

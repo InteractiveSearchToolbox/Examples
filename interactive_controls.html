@@ -92,11 +92,11 @@
             <div id="maskControlSettings">
                 <div class="settingsRow" id="maskColourRow">
                     <label for="maskColour">Mask Colour</label>
-                    <input id='maskColour' name='maskColour' value="#ff0000" type="color">
+                    <input id='maskColour' name='maskColour' value="#1e1e1e" type="color">
                 </div>
                 <div class="settingsRow" id="maskOpacityRow">
                     <label for="maskOpacity">Mask Opacity</label>
-                    <input id='maskOpacity' name='maskOpacity' type="range" min="0" max="1" step=0.1 value=1>
+                    <input id='maskOpacity' name='maskOpacity' type="range" min="0" max="1" step=0.01 value=1>
                 </div>
                 <div class="settingsRow">
                     <label for="maskRadius">Mask Radius</label>
@@ -203,7 +203,7 @@
                     maskControlSettings.style.display = 'block';
                     maskColourRow.style.display = 'flex';
                     maskOpacityRow.style.display = 'flex';
-                    controlInstructions.innerText = "Description: Mask text."
+                    controlInstructions.innerText = "Set an opaque or transparent mask over the entire screen with a cut out around the cursor position. Change the feather to make the edges of cut out softer - note, negative feather values will invert the mask."
                     break;
                 case "maskBlur":
                     IST.enableMaskControls({ maskType: 'blur', numberOfBlurPasses: blurPasses.value }) // Opaque mask
@@ -214,7 +214,7 @@
                     blurRow.style.display = 'flex';
                     blurPassesRow.style.display = 'flex';
 
-                    controlInstructions.innerText = "Description: Blur mask text."
+                    controlInstructions.innerText = "Set a mask that blurs the entire screen with a cut out around the cursor position. Change the feather to make the edges of cut out softer - note, negative feather values will invert the mask. Increasing the number of blur passes comes with performance costs."
                     break;
                 default:
                     // Orbit
@@ -234,7 +234,6 @@
 
         IST.onPreloadFinished(function () {
             IST.scene.background = IST.findLoadedTexture('puresky', IST.loadedEnvs)
-            IST.scene.fog = new THREE.FogExp2(0xcccccc, 0.002);
 
             function setupTrial() {
                 IST.camera.position.z = 50;
@@ -265,11 +264,13 @@
                 },
                 stimulus: `
                 <h3>Welcome!</h3>
-                When you are ready to start, press the button below!
+                In this example you can test out the different interactive controls that are built into the Interactive Search Toolbox!
+                <br> 
+                When you are ready to start, press the button below.
                 `,
                 on_finish(data) {
                 },
-                choices: ['Start Experiment']
+                choices: ['Continue']
             }
 
             const SEARCH_TRIAL = {
@@ -283,7 +284,7 @@
                 on_finish() {
                     IST.endTrial(); // Call this at the end of every trial - This is extremely important. 
                 },
-                choices: ['z', 'm']
+                choices: ['NO KEYS']
             }
 
 
